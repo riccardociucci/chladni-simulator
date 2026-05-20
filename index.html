@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Piatto di Chladni</title>
+<title>Chladni Plate</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:#0b0b13;color:#ccc;font-family:system-ui,sans-serif;overflow:hidden;}
@@ -59,17 +59,17 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     <div style="font-size:13px;font-weight:700;color:#aaa;">Chladni</div>
     <hr class="sep">
 
-    <!-- MODO 1: Fourier -->
+    <!-- MODE 1: Fourier -->
     <div>
-      <div class="stitle">Modo 1 — Fourier</div>
-      <div class="eq">Base·sin(πmx)sin(πny)<br>+ Specchio·sin(πnx)sin(πmy)</div>
+      <div class="stitle">Mode 1 — Fourier</div>
+      <div class="eq">Base·sin(πmx)sin(πny)<br>+ Mirror·sin(πnx)sin(πmy)</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px;">
         <div class="ctrl">
-          <div class="row"><span class="lbl">Nodi X</span><input type="number" id="nfx" value="3" min="1" max="10" step="1"></div>
+          <div class="row"><span class="lbl">Nodes X</span><input type="number" id="nfx" value="3" min="1" max="10" step="1"></div>
           <input type="range" id="sfx" min="1" max="10" value="3" step="1">
         </div>
         <div class="ctrl">
-          <div class="row"><span class="lbl">Nodi Y</span><input type="number" id="nfy" value="5" min="1" max="10" step="1"></div>
+          <div class="row"><span class="lbl">Nodes Y</span><input type="number" id="nfy" value="5" min="1" max="10" step="1"></div>
           <input type="range" id="sfy" min="1" max="10" value="5" step="1">
         </div>
         <div class="ab-row">
@@ -78,29 +78,29 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
             <input type="range" id="sa1" min="-2" max="2" value="1" step="0.05">
           </div>
           <div class="ctrl">
-            <div class="row"><span class="lbl">Specchio</span><input type="number" id="nb1" value="1.00" min="-2" max="2" step="0.05" style="width:44px"></div>
+            <div class="row"><span class="lbl">Mirror</span><input type="number" id="nb1" value="1.00" min="-2" max="2" step="0.05" style="width:44px"></div>
             <input type="range" id="sb1" min="-2" max="2" value="1" step="0.05">
           </div>
         </div>
         <hr class="sep" style="margin-top:2px;">
-        <div class="stitle" style="margin-bottom:1px;">Preset</div>
+        <div class="stitle" style="margin-bottom:1px;">Presets</div>
         <div id="preset-container"></div>
       </div>
     </div>
 
     <hr class="sep">
 
-    <!-- MODO 2: Onde circolari da sorgenti -->
+    <!-- MODE 2: Circular waves from sources -->
     <div>
-      <div class="stitle">Modo 2 — Sorgenti</div>
-      <div class="hint2" style="margin-bottom:4px;">Le maniglie sono sorgenti di onde circolari.<br>Le particelle si accumulano per interferenza.</div>
+      <div class="stitle">Mode 2 — Sources</div>
+      <div class="hint2" style="margin-bottom:4px;">Handles are circular wave sources.<br>Particles accumulate along interference nodes.</div>
       <div style="display:flex;flex-direction:column;gap:5px;">
         <div style="display:flex;gap:5px;align-items:stretch;">
           <button id="btnh" style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-start;">
             <span id="src-dot" style="width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background .25s,box-shadow .25s;"></span>
-            <span id="src-txt">Sorgenti disattive</span>
+            <span id="src-txt">Sources off</span>
           </button>
-          <button id="btsym" class="m2-off" title="Simmetria" style="width:30px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:14px;">
+          <button id="btsym" class="m2-off" title="Symmetry" style="width:30px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:14px;">
             <svg id="lock-icon" width="13" height="15" viewBox="0 0 13 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="1.5" y="7" width="10" height="7" rx="1.5" fill="currentColor" stroke="none" opacity=".75"/>
               <path id="lock-shackle" d="M3.5 7V5.5a3 3 0 016 0V7"/>
@@ -109,11 +109,11 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         </div>
         <div id="m2-params" class="m2-off">
           <div class="ctrl" style="margin-top:2px;">
-            <div class="row"><span class="lbl">Anelli k</span><input type="number" id="nk2" value="6" min="1" max="30" step="0.5" class="green"></div>
+            <div class="row"><span class="lbl">Rings k</span><input type="number" id="nk2" value="6" min="1" max="30" step="0.5" class="green"></div>
             <input type="range" id="sk2" min="1" max="30" value="6" step="0.5" class="green">
           </div>
           <div class="ctrl" style="margin-top:4px;">
-            <div class="row"><span class="lbl">Fusione 1↔2</span><input type="number" id="nmix" value="50" min="0" max="100" step="1" style="width:44px"></div>
+            <div class="row"><span class="lbl">Blend 1↔2</span><input type="number" id="nmix" value="50" min="0" max="100" step="1" style="width:44px"></div>
             <input type="range" id="rmix" min="0" max="100" value="50" step="1">
           </div>
         </div>
@@ -122,40 +122,40 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
     <hr class="sep">
 
-    <!-- PARTICELLE -->
+    <!-- PARTICLES -->
     <div>
-      <div class="stitle">Particelle</div>
+      <div class="stitle">Particles</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:3px;">
         <div class="ctrl">
-          <div class="row"><span class="lbl">Granelli</span><input type="number" id="np" value="25000" min="500" max="50000" step="500"></div>
+          <div class="row"><span class="lbl">Grains</span><input type="number" id="np" value="25000" min="500" max="50000" step="500"></div>
           <input type="range" id="rp" min="500" max="50000" value="25000" step="500">
         </div>
         <div class="ctrl">
-          <div class="row"><span class="lbl">Dimensione</span><input type="number" id="nd" value="0.6" min="0.2" max="4.0" step="0.1"></div>
+          <div class="row"><span class="lbl">Size</span><input type="number" id="nd" value="0.6" min="0.2" max="4.0" step="0.1"></div>
           <input type="range" id="rd" min="0.2" max="4.0" value="0.6" step="0.1">
         </div>
         <div class="ctrl">
-          <div class="row"><span class="lbl">Vibrazione</span><input type="number" id="nv" value="0.15" min="0.01" max="1.5" step="0.01"></div>
+          <div class="row"><span class="lbl">Vibration</span><input type="number" id="nv" value="0.15" min="0.01" max="1.5" step="0.01"></div>
           <input type="range" id="rv" min="0.01" max="1.5" value="0.15" step="0.01">
         </div>
       </div>
     </div>
 
     <hr class="sep">
-    <button id="bsc">↺ Sparpaglia</button>
-    <button id="bpa">⏸ Pausa</button>
-    <button id="bsvg">↓ Esporta SVG</button>
-    <button id="bfs">⛶ Schermo intero</button>
+    <button id="bsc">↺ Scatter</button>
+    <button id="bpa">⏸ Pause</button>
+    <button id="bsvg">↓ Export SVG</button>
+    <button id="bfs">⛶ Fullscreen</button>
     <div style="font-size:9px;color:#2e2e44;margin-top:auto;padding-top:6px;line-height:1.7;">
-      Preset verdi → Specchio=−1 (diagonale)<br>
-      Preset bianchi → Specchio=+1 (simmetrico)
+      Green presets → Mirror=−1 (diagonal)<br>
+      White presets → Mirror=+1 (symmetric)
     </div>
     <div class="kbhint">
-      <span style="color:#333;">␣</span> pausa &nbsp;
-      <span style="color:#333;">R</span> sparpaglia &nbsp;
+      <span style="color:#333;">␣</span> pause &nbsp;
+      <span style="color:#333;">R</span> scatter &nbsp;
       <span style="color:#333;">S</span> SVG<br>
-      <span style="color:#333;">← →</span> preset &nbsp;
-      <span style="color:#333;">F</span> schermo intero
+      <span style="color:#333;">← →</span> presets &nbsp;
+      <span style="color:#333;">F</span> fullscreen
     </div>
   </div>
   <div id="rh"></div>
@@ -172,16 +172,16 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
       [1,2, 1, 1,'1,2'],[1,2, 1,-1,'1,2−'],[1,3, 1, 1,'1,3'],[1,3, 1,-1,'1,3−'],
       [2,3, 1, 1,'2,3'],[2,3, 1,-1,'2,3−'],[1,4, 1, 1,'1,4'],[1,4, 1,-1,'1,4−'],
     ]},
-    { title: 'Griglia', presets: [
+    { title: 'Grid', presets: [
       [2,2, 1, 1,'2,2'],[3,3, 1, 1,'3,3'],[4,4, 1, 1,'4,4'],[5,5, 1, 1,'5,5'],[6,6, 1, 1,'6,6'],
     ]},
-    { title: 'Medi', presets: [
+    { title: 'Medium', presets: [
       [2,4, 1, 1,'2,4'],[3,4, 1, 1,'3,4'],[3,4, 1,-1,'3,4−'],
       [2,5, 1, 1,'2,5'],[2,5, 1,-1,'2,5−'],[3,5, 1, 1,'3,5'],[3,5, 1,-1,'3,5−'],
       [4,5, 1, 1,'4,5'],[4,5, 1,-1,'4,5−'],[3,6, 1, 1,'3,6'],
       [4,6, 1, 1,'4,6'],[4,6, 1,-1,'4,6−'],[5,6, 1, 1,'5,6'],[5,6, 1,-1,'5,6−'],
     ]},
-    { title: 'Complessi', presets: [
+    { title: 'Complex', presets: [
       [4,7, 1, 1,'4,7'],[4,7, 1,-1,'4,7−'],[5,7, 1, 1,'5,7'],[6,7, 1, 1,'6,7'],[6,7, 1,-1,'6,7−'],
       [5,8, 1, 1,'5,8'],[6,8, 1, 1,'6,8'],[7,8, 1, 1,'7,8'],[7,8, 1,-1,'7,8−'],
       [5,9, 1, 1,'5,9'],[7,9, 1, 1,'7,9'],[8,9, 1, 1,'8,9'],[8,9, 1,-1,'8,9−'],
@@ -433,7 +433,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     handlesOn=!handlesOn;
     srcDot.style.background=handlesOn?'#1D9E75':'#333';
     srcDot.style.boxShadow=handlesOn?'0 0 0 2px rgba(29,158,117,.22)':'none';
-    srcTxt.textContent=handlesOn?'Sorgenti attive':'Sorgenti disattive';
+    srcTxt.textContent=handlesOn?'Sources on':'Sources off';
     btnh.style.borderColor=handlesOn?'#1D9E75':'';
     m2p.classList.toggle('m2-off',!handlesOn);
     btsym.classList.toggle('m2-off',!handlesOn);
@@ -450,7 +450,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   updateLock();
   document.getElementById('bsc').addEventListener('click',scatter);
   const bpa=document.getElementById('bpa');
-  bpa.addEventListener('click',()=>{paused=!paused;bpa.textContent=paused?'▶ Riprendi':'⏸ Pausa';bpa.classList.toggle('on',paused);});
+  bpa.addEventListener('click',()=>{paused=!paused;bpa.textContent=paused?'▶ Resume':'⏸ Pause';bpa.classList.toggle('on',paused);});
 
   document.getElementById('bsvg').addEventListener('click',()=>{
     const size=1200,scale=size/PS;
@@ -605,7 +605,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     fsOn=on;
     app.classList.toggle('fullscreen',on);
     bfs.classList.toggle('on',on);
-    bfs.textContent=on?'✕ Esci schermo intero':'⛶ Schermo intero';
+    bfs.textContent=on?'✕ Exit fullscreen':'⛶ Fullscreen';
     resize();
   }
   bfs.addEventListener('click',()=>setFullscreen(!fsOn));
