@@ -90,11 +90,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
           <div class="row"><span class="lbl">Stroke width</span><input type="number" id="nsw" value="1.0" min="0.3" max="4.0" step="0.1"></div>
           <input type="range" id="ssw" min="0.3" max="4.0" value="1.0" step="0.1">
         </div>
-        <div class="ctrl">
-          <div class="row"><span class="lbl">Detail</span><input type="number" id="nvres" value="300" min="100" max="500" step="20"></div>
-          <input type="range" id="svres" min="100" max="500" value="300" step="20">
-        </div>
-        <button id="bcurv" class="on">∿ Smooth curves on</button>
+        <button id="bcurv">≷ Smooth curves off</button>
       </div>
     </div>
 
@@ -164,7 +160,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     <hr class="sep">
 
     <!-- PARTICLES -->
-    <div>
+    <div id="particles-section">
       <div class="stitle">Particles</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:3px;">
         <div class="ctrl">
@@ -260,8 +256,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   // ── Vector params ────────────────────────────────────────
   let viewMode='particles';            // 'particles' | 'vector'
   let FILLMODE='band';                 // 'none' | 'band' | 'regions'
-  let OUTLINE=false,SMOOTH=true;
-  let BANDEPS=0.12,VRES=300,STROKEW=1.0;
+  let OUTLINE=false,SMOOTH=false;
+  let BANDEPS=0.12,STROKEW=1.0;
   let vectorDirty=true;
   let vecFillChains=[],vecOutlineChains=[];
   let vecFillPath=null,vecOutlinePaths=[];
@@ -423,9 +419,17 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         if((tl>0)!==(bl>0))pts.push([x0,lp(tl,bl,y0,y1)]);
         if(pts.length===2)segs.push([pts[0],pts[1]]);
         else if(pts.length===4){
-          const cz=(tl+tr+bl+br)*0.25;
-          if((cz>0)===(tl>0)){segs.push([pts[0],pts[1]]);segs.push([pts[3],pts[2]]);}
-          else{segs.push([pts[0],pts[3]]);segs.push([pts[1],pts[2]]);}
+          const D=tl-tr-bl+br;
+          if(Math.abs(D)>1e-9){
+            const u=Math.max(0,Math.min(1,(tl-bl)/D)),v=Math.max(0,Math.min(1,(tl-tr)/D));
+            const sp=[x0+u*step,y0+v*step];
+            segs.push([pts[0],sp]);segs.push([sp,pts[2]]);
+            segs.push([pts[3],sp]);segs.push([sp,pts[1]]);
+          } else {
+            const cz=(tl+tr+bl+br)*0.25;
+            if((cz>0)===(tl>0)){segs.push([pts[0],pts[1]]);segs.push([pts[3],pts[2]]);}
+            else{segs.push([pts[0],pts[3]]);segs.push([pts[1],pts[2]]);}
+          }
         }
       }
     }
@@ -503,7 +507,13 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
   function simplifyChain(c,eps){
     if(c.closed){
-      const r=rdp(c.pts.concat([c.pts[0]]),eps);
+      const n=c.pts.length;
+      let si=0;
+      for(let i=1;i<n;i++){
+        if(c.pts[i][0]<c.pts[si][0]||(c.pts[i][0]===c.pts[si][0]&&c.pts[i][1]<c.pts[si][1]))si=i;
+      }
+      const rotated=si>0?c.pts.slice(si).concat(c.pts.slice(0,si)):c.pts;
+      const r=rdp(rotated.concat([rotated[0]]),eps);
       r.pop();
       if(r.length>=3)c.pts=r;
     } else {
@@ -511,6 +521,13 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
       if(r.length>=2)c.pts=r;
     }
     return c;
+  }
+
+  function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t;}return a||1;}
+  function fixN(t){t=Math.round(t);if(t%2===0)t++;let g=0;while((gcd(t,FX1)!==1||gcd(t,FY1)!==1)&&g<60){t+=2;g++;}return t;}
+  function autoRes(){
+    const f=Math.max(FX1,FY1,1);
+    return fixN(Math.max(220,Math.min(560,Math.round(44*f))));
   }
 
   // ── Vector: polilinea → path SVG (lineare o Bézier Catmull-Rom) ──
@@ -547,7 +564,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   // ── Vector: ricalcolo completo ───────────────────────────
   function computeVectors(){
     // Durante il drag delle sorgenti usa metà risoluzione per fluidità
-    const N=drag>=0?Math.max(80,Math.round(VRES/2)):VRES;
+    const N=drag>=0?fixN(Math.max(121,autoRes()/2)):autoRes();
     const step=PS/N,Z=sampleField(N);
     const at=(j,i)=>Z[j*(N+1)+i];
     const border=(j,i)=>i===0||j===0||i===N||j===N;
@@ -687,7 +704,6 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   sync('rv','nv',2,v=>{VIB=v;});
   sync('sbe','nbe',2,v=>{BANDEPS=v;markVectorDirty();});
   sync('ssw','nsw',1,v=>{STROKEW=v;});
-  sync('svres','nvres',0,v=>{VRES=Math.round(v);markVectorDirty();});
   (()=>{
     const sl=document.getElementById('rmix'),nb=document.getElementById('nmix');
     function apply(pct){const c=Math.max(0,Math.min(100,isNaN(pct)?50:pct));MIX=c/100;sl.value=c;nb.value=c;kickVelocities();triggerBoost();markVectorDirty();}
@@ -702,11 +718,17 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   const bsvg=document.getElementById('bsvg');
   function setView(m){
     viewMode=m;
+    const vec=m==='vector';
     bvp.classList.toggle('on',m==='particles');
-    bvv.classList.toggle('on',m==='vector');
-    vparams.classList.toggle('m2-off',m!=='vector');
-    bsvg.textContent=m==='vector'?'↓ Export SVG (vector)':'↓ Export SVG (particles)';
-    if(m==='vector')markVectorDirty();
+    bvv.classList.toggle('on',vec);
+    vparams.classList.toggle('m2-off',!vec);
+    bsvg.textContent=vec?'↓ Export SVG (vector)':'↓ Export SVG (particles)';
+    document.getElementById('particles-section').classList.toggle('m2-off',vec);
+    document.getElementById('bsc').classList.toggle('m2-off',vec);
+    const pa=document.getElementById('bpa');
+    pa.classList.toggle('m2-off',vec);
+    if(vec&&paused){paused=false;pa.textContent='⏸ Pause';pa.classList.remove('on');}
+    if(vec)markVectorDirty();
   }
   bvp.addEventListener('click',()=>setView('particles'));
   bvv.addEventListener('click',()=>setView('vector'));
@@ -968,13 +990,13 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     switch(e.key){
       case ' ':
         e.preventDefault();
-        bpa.click();
+        if(viewMode!=='vector')bpa.click();
         break;
       case 'v': case 'V':
         setView(viewMode==='vector'?'particles':'vector');
         break;
       case 'r': case 'R':
-        scatter(); triggerBoost();
+        if(viewMode!=='vector'){scatter();triggerBoost();}
         break;
       case 's': case 'S':
         bsvg.click();
