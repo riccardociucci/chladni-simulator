@@ -1,87 +1,94 @@
-# Chladni Plate Simulator
+# Chladni Simulator
 
-An interactive Chladni figure simulator that runs entirely in the browser — no installation required. Chladni figures are the geometric patterns formed when sand on a vibrating plate accumulates along nodal lines, the points where vibration is zero.
+Interactive browser-based Chladni figure simulator. No installation, no dependencies — open the HTML file and it runs.
 
-### How it works
+Chladni figures are the geometric patterns that appear when sand on a vibrating plate accumulates along nodal lines, the points where vibration is zero. This simulator lets you explore them in real time, in both particle and vector form.
 
-The simulation uses two blendable physics modes:
+---
 
-- **Fourier Mode** — computes the vibration field using the formula `Base·sin(πmx)sin(πny) + Mirror·sin(πnx)sin(πmy)`, controllable via the Nodes X, Nodes Y, Base and Mirror parameters.
-- **Sources Mode** — four freely positionable circular wave sources that generate interference patterns.
-
-The two modes blend together via the **Fusion** slider.
-
-### Files
+## Files
 
 | File | Description |
 |------|-------------|
-| `index.html` | Particle simulation — 25,000 sand particles in real time |
-| `chladni-vector.html` | Vector mode — clean SVG figures with fill and outline, exportable to Illustrator |
+| `index.html` | Particle mode — 25,000 sand grains in real time |
+| `chladnisimulator.html` | Full version — particles + vector rendering with SVG export |
 
 ---
 
-## index.html — Particle Simulator
+## Physics
 
-### Features
+### Mode 1 — Fourier
 
-- 25,000 particles simulated in real time
-- Sidebar with preset groups, each with a dynamically generated SVG thumbnail
-- Wave sources with lockable symmetry via the lock button
-- SVG export of the current particle frame
-- Fullscreen mode
-- Keyboard shortcuts: `Space` pause, `R` scatter, `←/→` navigate presets, `S` export SVG, `F` fullscreen
+z(x,y) = Base · sin(πmx)sin(πny) + Mirror · sin(πnx)sin(πmy)
 
-### How to use
+`m` and `n` control the number of nodes along X and Y. `Mirror = +1` produces symmetric patterns; `Mirror = −1` produces diagonal ones — shown in green in the UI.
 
-Open `index.html` in your browser. No external dependencies, no installation needed.
+### Mode 2 — Sources
+
+Four circular wave sources, draggable on the canvas:
+
+f(x,y) = Σ cos(K · rᵢ)
+
+Particles accumulate along interference nodes (zero-crossings of f). A Blend slider interpolates between the two modes.
 
 ---
 
-## chladni-vector.html — Vector Mode
+## Vector rendering
 
-Extends the particle simulator with a **Vector** rendering mode that extracts clean geometric figures directly from the vibration field using the Marching Squares algorithm. The output is a structured SVG with separate layers for background, fill, outline, and border — ready to edit in Adobe Illustrator or any vector tool.
+The vector pipeline extracts nodal lines as clean, exportable SVG paths.
 
-### View modes
+    autoRes()       → N = fixN(44·max(m,n)), odd and coprime with both m and n
+    sampleField(N)  → (N+1)×(N+1) grid, normalised to max|z|=1
+    marchSquares()  → isolines with bilinear saddle-point interpolation
+    chainSegs()     → segment graph → continuous polylines
+    simplifyChain() → RDP with canonical start for closed chains
+    chainToPath()   → SVG path (polyline or Catmull-Rom Bézier)
 
-Switch between modes with the **Particles / Vector** buttons in the sidebar, or press `V`.
+Fill modes: None · Band (region where |z| < threshold) · Regions (positive/negative areas).
+Outline: optional stroke along the nodal lines.
+Export: 1200×1200 px SVG with named layers (background, fill, outline, border) — ready for Illustrator.
 
-- **Particles** — identical to the original particle simulator
-- **Vector** — renders the nodal figure as filled and/or outlined vector shapes
+---
 
-### Vector controls
+## Controls
 
-| Control | Description |
-|---------|-------------|
-| **Fill** | `None` — no fill · `Band` — fills the nodal band (region where \|z\| < threshold) · `Regions` — fills all areas where z > 0 |
-| **Band thickness** | Width of the nodal band used by the Band fill mode (0.02 – 0.40) |
-| **Outline** | Toggles the stroke drawn along the nodal contour lines |
-| **Stroke width** | Thickness of the outline stroke (0.3 – 4.0 px) |
-| **Detail** | Grid resolution for contour extraction (100 – 500 cells). Higher values capture finer features |
-| **Smooth curves** | Replaces straight segments with clamped Catmull-Rom Bézier curves |
-
-### SVG export
-
-Click **Export SVG (vector)** or press `S` while in Vector mode. The exported file contains four named groups that map to separate layers in Illustrator:
-
-| Layer / group | Content |
-|---------------|---------|
-| `background` | Solid white rectangle |
-| `fill` | Filled closed shapes (Band or Regions, with `fill-rule="evenodd"` for correct hole handling) |
-| `outline` | Nodal contour paths |
-| `border` | Closed rectangular frame matching the figure boundary |
+| Label          | Variable  | Range       | Default |
+|----------------|-----------|-------------|---------|
+| Nodes X        | m         | 1–10        | 3       |
+| Nodes Y        | n         | 1–10        | 5       |
+| Base           | a         | −2 / +2     | 1.00    |
+| Mirror         | b         | −2 / +2     | 1.00    |
+| Band thickness | BANDEPS   | 0.02–0.40   | 0.12    |
+| Stroke width   | STROKEW   | 0.3–4.0     | 1.0     |
+| Grains         | NP        | 500–50,000  | 25,000  |
+| Vibration      | VIB       | 0.01–1.5    | 0.15    |
 
 ### Keyboard shortcuts
 
-| Key | Action |
-|-----|--------|
-| `V` | Toggle Particles / Vector mode |
-| `Space` | Pause / resume particles |
-| `R` | Scatter particles |
-| `S` | Export SVG |
-| `F` | Fullscreen |
-| `Esc` | Exit fullscreen |
-| `←` / `→` | Navigate presets |
+| Key   | Action                              |
+|-------|-------------------------------------|
+| V     | Toggle Particles / Vector           |
+| Space | Pause / resume (particles only)     |
+| R     | Scatter + boost (particles only)    |
+| S     | Export SVG                          |
+| F     | Fullscreen                          |
+| ← →   | Navigate presets                    |
+| Esc   | Exit fullscreen                     |
 
-### How to use
+### Presets
 
-Open `chladni-vector.html` in your browser. No external dependencies, no installation needed.
+43 presets across 4 groups (Base · Grid · Medium · Complex), each with a live SVG thumbnail generated via marching squares. White presets have Mirror = +1; green presets have Mirror = −1.
+
+---
+
+## Technical notes
+
+Coprime resolution — N is always odd and coprime with both m and n, so no grid sample falls exactly on a nodal line. This is the key to perfectly symmetric patterns at any mode combination.
+
+Bilinear saddle-point — the classic marching squares saddle ambiguity is resolved with bilinear interpolation rather than the center-sign heuristic, producing geometrically exact X crossings.
+
+Smooth toggle — off by default (clean polylines); when on, curves use Catmull-Rom Bézier with control vectors clamped to segLen/3 to prevent overshooting after simplification.
+
+Deterministic simplification — closed chains are rotated to a canonical start (leftmost point, then topmost) before RDP, making the output order-independent.
+
+Forced negative border — during fill marching squares, border samples are clamped to a small negative value so all fill contours close inside the domain, producing clean closed shapes in Illustrator.
