@@ -306,7 +306,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   let boostLeft=0;
   function triggerBoost(){boostLeft=BOOST_FRAMES;}
 
-  // Adattamento sui formati non quadrati (29/09/2026). Tutto vive in
+  // Adattamento sui formati non quadrati (28/09/2026). Tutto vive in
   // coordinate canvas: cambia solo come (x,y) si mappa nel dominio unitario
   // (u,v) della formula e con quali frequenze. 'stretch' ricalcola la figura
   // sul rettangolo a nodi fissi, e risulta stirata; 'density' scala i nodi
@@ -475,7 +475,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     }
     // Le linee nodali diagonali passano esattamente sui vertici della griglia,
     // dove il calcolo dà ±1e-16 di segno casuale: senza azzerarle la linea esce
-    // a pezzi (verificato il 29/09/2026: 246 tracciati invece di 2 sull'1,3−).
+    // a pezzi (verificato il 28/09/2026: 246 tracciati invece di 2 sull'1,3−).
     const snap=maxAbs*1e-9;
     for(let i=0;i<Z.length;i++)if(Math.abs(Z[i])<snap)Z[i]=0;
     if(maxAbs>1e-12){const inv=1/maxAbs;for(let i=0;i<Z.length;i++)Z[i]*=inv;}
