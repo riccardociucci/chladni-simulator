@@ -44,7 +44,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 .sep{border:none;border-top:1px solid #1e1e30;margin:1px 0;}
 .ab-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
 .ab-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
-.ab-row3 button,.ab-row button{text-align:center;}
+.ab-row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;}
+.ab-row3 button,.ab-row button,.ab-row4 button{text-align:center;}
 .eq{font-size:9.5px;color:#444;line-height:1.5;margin-top:2px;font-style:italic;}
 .m2-off{opacity:.28;pointer-events:none;transition:opacity .25s;}
 .hint2{font-size:9px;color:#2a3a2a;line-height:1.5;margin-top:1px;}
@@ -59,6 +60,36 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 <div id="app">
   <div id="sidebar">
     <div style="font-size:13px;font-weight:700;color:#aaa;">Chladni <span style="color:#7F77DD;">· Vector</span></div>
+
+    <!-- FORMAT -->
+    <div>
+      <div class="stitle">Format</div>
+      <div class="ab-row4" style="margin-top:3px;">
+        <button id="bf11" class="on">1:1</button>
+        <button id="bf45">4:5</button>
+        <button id="bf916">9:16</button>
+        <button id="bfcu">Custom</button>
+      </div>
+      <div class="ctrl m2-off" id="customfmt" style="margin-top:5px;">
+        <div class="ab-row">
+          <div class="ctrl">
+            <div class="row"><span class="lbl">Width</span><input type="number" id="ncw" value="1080" min="100" max="4000" step="1" style="width:56px"></div>
+          </div>
+          <div class="ctrl">
+            <div class="row"><span class="lbl">Height</span><input type="number" id="nch" value="1080" min="100" max="4000" step="1" style="width:56px"></div>
+          </div>
+        </div>
+        <div class="hint2" style="margin-top:2px;">Pixel, risoluzione reale del canvas.</div>
+      </div>
+      <div class="lbl" style="margin-top:6px;margin-bottom:2px;">Adatta</div>
+      <div class="ab-row3">
+        <button id="bastr" title="Fisica ricalcolata su W×H: a nodi fissi il pattern risulta stirato">Stretch</button>
+        <button id="badns" class="on" title="Come Stretch ma i nodi sull'asse lungo si scalano per non stirare">Density</button>
+        <button id="bacrp" title="Pattern quadrato congelato, scalato a coprire il formato (ritaglia)">Crop</button>
+      </div>
+    </div>
+
+    <hr class="sep">
 
     <!-- VIEW MODE -->
     <div>
@@ -100,6 +131,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     <div>
       <div class="stitle">Mode 1 — Fourier</div>
       <div class="eq">Base·sin(πmx)sin(πny)<br>+ Mirror·sin(πnx)sin(πmy)</div>
+      <div class="hint2" id="densityhint" style="margin-top:1px;">Su formati non 1:1 conta la modalità Adatta — Density scala i nodi sull'asse lungo, Crop congela il pattern al quadrato e lo ritaglia.</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px;">
         <div class="ctrl">
           <div class="row"><span class="lbl">Nodes X</span><input type="number" id="nfx" value="3" min="1" max="10" step="1"></div>
@@ -179,7 +211,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     </div>
 
     <hr class="sep">
-    <button id="bsc">↺ Scatter</button>
+    <button id="bsc">↺ Reset</button>
     <button id="bpa">⏸ Pause</button>
     <button id="bsvg">↓ Export SVG (particles)</button>
     <button id="bfs">⛶ Fullscreen</button>
@@ -190,7 +222,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     <div class="kbhint">
       <span style="color:#333;">␣</span> pause &nbsp;
       <span style="color:#333;">V</span> view &nbsp;
-      <span style="color:#333;">R</span> scatter &nbsp;
+      <span style="color:#333;">R</span> reset &nbsp;
       <span style="color:#333;">S</span> SVG<br>
       <span style="color:#333;">← →</span> presets &nbsp;
       <span style="color:#333;">F</span> fullscreen
@@ -228,20 +260,41 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   ];
 
   // ── Canvas / resize ──────────────────────────────────────
+  // Formato tavola: 'ratio' adatta W,H al riquadro disponibile mantenendo il
+  // rapporto scelto; 'custom' fissa la risoluzione reale del canvas ai pixel
+  // richiesti, mostrata scalata via CSS. PS=min(W,H) è la scala isotropica per
+  // ciò che non ha direzione: hit-radius maniglie, numero d'onda K del Modo 2.
   const cv=document.getElementById('chl'), cx=cv.getContext('2d');
   const wrap=document.getElementById('canvaswrap');
-  let W=100,H=100,PS=100;
+  let W=0,H=0,PS=100;
+  let FORMAT={mode:'ratio',rw:1,rh:1,cw:1080,ch:1080};
 
   function resize(){
-    const s=Math.floor(Math.min(wrap.clientWidth-16,wrap.clientHeight-16));
-    W=s;H=s;PS=s;cv.width=W;cv.height=H;
-    cv.style.width=s+'px';cv.style.height=s+'px';
-    hx2=clampH(hx2||PS*0.3);hy2=clampH(hy2||PS*0.3);
+    const availW=Math.max(40,wrap.clientWidth-16),availH=Math.max(40,wrap.clientHeight-16);
+    let w,h;
+    if(FORMAT.mode==='custom'){
+      w=FORMAT.cw;h=FORMAT.ch;
+    } else {
+      const r=FORMAT.rw/FORMAT.rh;
+      w=availW;h=w/r;
+      if(h>availH){h=availH;w=h*r;}
+    }
+    const nW=Math.max(40,Math.floor(w)),nH=Math.max(40,Math.floor(h));
+    const disp=Math.min(availW/nW,availH/nH);
+    cv.style.width=Math.floor(nW*disp)+'px';cv.style.height=Math.floor(nH*disp)+'px';
+    if(nW===W&&nH===H)return;
+    const sx=W?nW/W:1,sy=H?nH/H:1;
+    W=nW;H=nH;PS=Math.min(W,H);cv.width=W;cv.height=H;
+    // Particelle e sorgenti si riscalano con la tavola invece di ripartire da
+    // zero: ridimensionare la finestra non cancella la figura già formata.
+    if(ppx&&ppx.length===NP){for(let i=0;i<NP;i++){ppx[i]*=sx;ppy[i]*=sy;}}
+    else scatter();
+    hx2=clampHDim(hx2?hx2*sx:W*0.3,W);hy2=clampHDim(hy2?hy2*sy:H*0.3,H);
     if(srcPos[0][0]===0)initSrcPos();
-    scatter();
-    markVectorDirty();
+    else srcPos.forEach(p=>{p[0]=Math.max(2,Math.min(W-2,p[0]*sx));p[1]=Math.max(2,Math.min(H-2,p[1]*sy));});
+    markFieldDirty();markVectorDirty();
   }
-  const clampH=v=>Math.max(Math.max(12,PS*0.02),Math.min(PS/2-8,isFinite(v)&&v>0?v:PS*0.3));
+  const clampHDim=(v,dim)=>Math.max(Math.max(12,dim*0.02),Math.min(dim/2-8,isFinite(v)&&v>0?v:dim*0.3));
 
   // ── Params ───────────────────────────────────────────────
   let FX1=3,FY1=5,A1=1,B1=1;          // Modo 1: Fourier
@@ -253,13 +306,32 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   let boostLeft=0;
   function triggerBoost(){boostLeft=BOOST_FRAMES;}
 
+  // Adattamento sui formati non quadrati (29/09/2026). Tutto vive in
+  // coordinate canvas: cambia solo come (x,y) si mappa nel dominio unitario
+  // (u,v) della formula e con quali frequenze. 'stretch' ricalcola la figura
+  // sul rettangolo a nodi fissi, e risulta stirata; 'density' scala i nodi
+  // dell'asse lungo per tenerne costante la spaziatura; 'crop' è una finestra
+  // centrata sulla figura quadrata di lato max(W,H), cioè l'1:1 ritagliato.
+  let ADAPT='density'; // 'stretch' | 'density' | 'crop'
+  // Intero più vicino con la stessa parità di p: la parità dei nodi decide le
+  // simmetrie a specchio della figura, arrotondare liberamente le rompe.
+  function parityRound(v,p){let r=Math.round(v);if(Math.abs(r-p)%2===1)r+=v>r?1:-1;return Math.max(p,Math.min(p%2?59:60,r));}
+  // Frequenze per asse dei due termini: Base = sin(π·ax·u)·sin(π·ay·v),
+  // Mirror = sin(π·bx·u)·sin(π·by·v). A 1:1 ax=by=m e ay=bx=n.
+  function geom(){
+    const m=FX1,n=FY1;
+    if(ADAPT==='crop'){const L=Math.max(W,H);return{ox:(L-W)/2,oy:(L-H)/2,Lx:L,Ly:L,ax:m,ay:n,bx:n,by:m};}
+    if(ADAPT==='density'){const rx=W/PS,ry=H/PS;
+      return{ox:0,oy:0,Lx:W,Ly:H,ax:parityRound(m*rx,m),ay:parityRound(n*ry,n),bx:parityRound(n*rx,n),by:parityRound(m*ry,m)};}
+    return{ox:0,oy:0,Lx:W,Ly:H,ax:m,ay:n,bx:n,by:m};
+  }
+
   // ── Vector params ────────────────────────────────────────
   let viewMode='particles';            // 'particles' | 'vector'
   let FILLMODE='band';                 // 'none' | 'band' | 'regions'
   let OUTLINE=false,SMOOTH=false;
   let BANDEPS=0.12,STROKEW=1.0;
   let vectorDirty=true;
-  let vecFillChains=[],vecOutlineChains=[];
   let vecFillPath=null,vecOutlinePaths=[];
   function markVectorDirty(){vectorDirty=true;}
 
@@ -272,7 +344,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   function scatter(){
     if(!ppx||ppx.length!==NP)alloc();
     for(let i=0;i<NP;i++){
-      ppx[i]=2+Math.random()*(PS-4);ppy[i]=2+Math.random()*(PS-4);
+      ppx[i]=2+Math.random()*(W-4);ppy[i]=2+Math.random()*(H-4);
       pvx[i]=(Math.random()-.5)*6;pvy[i]=(Math.random()-.5)*6;pr[i]=.6+Math.random()*.9;
     }
   }
@@ -282,17 +354,17 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
 
   // ── Physics: Modo 1 (Fourier) ─────────────────────────────
+  // z = a·sin(π·ax·u)·sin(π·ay·v) + b·sin(π·bx·u)·sin(π·by·v), con
+  // u=(x+ox)/Lx e v=(y+oy)/Ly (vedi geom). Le derivate si dividono per Lx e Ly
+  // separati: su tavola rettangolare le due direzioni hanno scale diverse.
   const PI=Math.PI;
-  function forceFourier(fx,fy,a,b,xi,yi){
-    const x=xi/PS,y=yi/PS;
-    const kx=PI*fx/PS,ky=PI*fy/PS;
-    const sfxx=Math.sin(PI*fx*x),cfxx=Math.cos(PI*fx*x);
-    const sfyx=Math.sin(PI*fy*x),cfyx=Math.cos(PI*fy*x);
-    const sfxy=Math.sin(PI*fx*y),cfxy=Math.cos(PI*fx*y);
-    const sfyy=Math.sin(PI*fy*y),cfyy=Math.cos(PI*fy*y);
-    const z=a*sfxx*sfyy+b*sfyx*sfxy;
-    const dzdx=a*kx*cfxx*sfyy+b*ky*cfyx*sfxy;
-    const dzdy=a*ky*sfxx*cfyy+b*kx*sfyx*cfxy;
+  function forceFourier(g,a,b,xi,yi){
+    const u=(xi+g.ox)/g.Lx,v=(yi+g.oy)/g.Ly;
+    const sAx=Math.sin(PI*g.ax*u),cAx=Math.cos(PI*g.ax*u),sAy=Math.sin(PI*g.ay*v),cAy=Math.cos(PI*g.ay*v);
+    const sBx=Math.sin(PI*g.bx*u),cBx=Math.cos(PI*g.bx*u),sBy=Math.sin(PI*g.by*v),cBy=Math.cos(PI*g.by*v);
+    const z=a*sAx*sAy+b*sBx*sBy;
+    const dzdx=PI*(a*g.ax*cAx*sAy+b*g.bx*cBx*sBy)/g.Lx;
+    const dzdy=PI*(a*g.ay*sAx*cAy+b*g.by*sBx*cBy)/g.Ly;
     return[-2*z*dzdx,-2*z*dzdy];
   }
 
@@ -319,7 +391,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
   function renderField(){
     if(!handlesOn){fieldDirty=false;return;}
-    const fw=Math.ceil(PS/3),fh=Math.ceil(PS/3);
+    const fw=Math.ceil(W/3),fh=Math.ceil(H/3);
     if(!fieldCv){fieldCv=document.createElement('canvas');fieldCtx2=fieldCv.getContext('2d');}
     if(fieldCv.width!==fw||fieldCv.height!==fh){fieldCv.width=fw;fieldCv.height=fh;}
     const K=K2*PI/PS;
@@ -327,7 +399,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     const img=fieldCtx2.createImageData(fw,fh);
     for(let j=0;j<fh;j++){
       for(let i=0;i<fw;i++){
-        const xi=i/fw*PS,yi=j/fh*PS;
+        const xi=i/fw*W,yi=j/fh*H;
         let z=0;
         for(let s=0;s<4;s++){const dx=xi-srcs[s][0],dy=yi-srcs[s][1],r=Math.sqrt(dx*dx+dy*dy);if(r>0.5)z+=Math.cos(K*r);}
         const norm=Math.min(1,Math.abs(z)/4);
@@ -347,26 +419,27 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     const damp=DAMP_BASE-t*(DAMP_BASE-DAMP_BOOST);
     const K=K2*PI/PS;
     const w2=(handlesOn&&MIX>0)?MIX:0,w1=1-w2;
+    const g=geom();
     for(let i=0;i<NP;i++){
       let fx=0,fy=0;
-      if(w1>0){const[f1x,f1y]=forceFourier(FX1,FY1,A1,B1,ppx[i],ppy[i]);fx+=w1*f1x;fy+=w1*f1y;}
+      if(w1>0){const[f1x,f1y]=forceFourier(g,A1,B1,ppx[i],ppy[i]);fx+=w1*f1x;fy+=w1*f1y;}
       if(w2>0){const[f2x,f2y]=forceCircular(K,ppx[i],ppy[i]);fx+=w2*f2x;fy+=w2*f2y;}
       pvx[i]+=fk*fx;pvy[i]+=fk*fy;
       pvx[i]+=(Math.random()-.5)*VIB;pvy[i]+=(Math.random()-.5)*VIB;
       pvx[i]*=damp;pvy[i]*=damp;
       ppx[i]+=pvx[i];ppy[i]+=pvy[i];
-      if(ppx[i]<0){ppx[i]=0;pvx[i]*=-.3;}if(ppx[i]>PS){ppx[i]=PS;pvx[i]*=-.3;}
-      if(ppy[i]<0){ppy[i]=0;pvy[i]*=-.3;}if(ppy[i]>PS){ppy[i]=PS;pvy[i]*=-.3;}
+      if(ppx[i]<0){ppx[i]=0;pvx[i]*=-.3;}if(ppx[i]>W){ppx[i]=W;pvx[i]*=-.3;}
+      if(ppy[i]<0){ppy[i]=0;pvy[i]*=-.3;}if(ppy[i]>H){ppy[i]=H;pvy[i]*=-.3;}
     }
   }
 
   // ── Handles ──────────────────────────────────────────────
   function getSources(){
-    if(symMode) return[[hx2,hy2],[PS-hx2,hy2],[hx2,PS-hy2],[PS-hx2,PS-hy2]];
+    if(symMode) return[[hx2,hy2],[W-hx2,hy2],[hx2,H-hy2],[W-hx2,H-hy2]];
     return srcPos;
   }
   function initSrcPos(){
-    const s=[[hx2,hy2],[PS-hx2,hy2],[hx2,PS-hy2],[PS-hx2,PS-hy2]];
+    const s=[[hx2,hy2],[W-hx2,hy2],[hx2,H-hy2],[W-hx2,H-hy2]];
     srcPos=s.map(p=>[p[0],p[1]]);
   }
   function hitH(mx,my){
@@ -380,56 +453,62 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   // z(x,y) = w1·Fourier + w2·Sources, normalizzato a max|z| = 1.
   // Le linee nodali (z=0) sono le figure di Chladni; il fill "band"
   // è la regione |z| < BANDEPS (l'analogo della sabbia accumulata).
-  function sampleField(N){
-    const Z=new Float32Array((N+1)*(N+1));
+  function sampleField(Nx,Ny){
+    const Z=new Float32Array((Ny+1)*(Nx+1));
     const w2=(handlesOn&&MIX>0)?MIX:0,w1=1-w2;
-    const srcs=getSources(),K=K2*PI/PS,step=PS/N;
+    const srcs=getSources(),K=K2*PI/PS,stepX=W/Nx,stepY=H/Ny,g=geom();
     let maxAbs=0;
-    for(let j=0;j<=N;j++){
-      const y=j*step,sy=y/PS;
-      for(let i=0;i<=N;i++){
-        const x=i*step,sx=x/PS;
+    for(let j=0;j<=Ny;j++){
+      const y=j*stepY,v=(y+g.oy)/g.Ly;
+      for(let i=0;i<=Nx;i++){
+        const x=i*stepX,u=(x+g.ox)/g.Lx;
         let z=0;
-        if(w1!==0)z+=w1*(A1*Math.sin(PI*FX1*sx)*Math.sin(PI*FY1*sy)+B1*Math.sin(PI*FY1*sx)*Math.sin(PI*FX1*sy));
+        if(w1!==0)z+=w1*(A1*Math.sin(PI*g.ax*u)*Math.sin(PI*g.ay*v)+B1*Math.sin(PI*g.bx*u)*Math.sin(PI*g.by*v));
         if(w2!==0){
           let f=0;
           for(let s=0;s<4;s++){const dx=x-srcs[s][0],dy=y-srcs[s][1],r=Math.sqrt(dx*dx+dy*dy);if(r>0.5)f+=Math.cos(K*r);}
           z+=w2*f*0.5;
         }
-        Z[j*(N+1)+i]=z;
+        Z[j*(Nx+1)+i]=z;
         const a=Math.abs(z);if(a>maxAbs)maxAbs=a;
       }
     }
+    // Le linee nodali diagonali passano esattamente sui vertici della griglia,
+    // dove il calcolo dà ±1e-16 di segno casuale: senza azzerarle la linea esce
+    // a pezzi (verificato il 29/09/2026: 246 tracciati invece di 2 sull'1,3−).
+    const snap=maxAbs*1e-9;
+    for(let i=0;i<Z.length;i++)if(Math.abs(Z[i])<snap)Z[i]=0;
     if(maxAbs>1e-12){const inv=1/maxAbs;for(let i=0;i<Z.length;i++)Z[i]*=inv;}
     return Z;
   }
 
   // ── Vector: marching squares (livello 0 di val) ──────────
-  function marchSquares(val,N,step){
-    const segs=[];
+  // Ogni punto porta in .e l'id del lato di griglia su cui cade: le due celle
+  // che condividono un lato generano lo stesso id, e chainSegs ricuce per
+  // topologia. Ricucire per coordinate arrotondate fondeva punti distinti a
+  // 0,01 px e spezzava i contorni.
+  function marchSquares(val,Nx,Ny,stepX,stepY){
+    const segs=[],HOFF=(Ny+1)*Nx;
     const lp=(v0,v1,a0,a1)=>a0+v0/(v0-v1)*(a1-a0);
-    for(let j=0;j<N;j++){
-      for(let i=0;i<N;i++){
+    const P=(x,y,e)=>{const p=[x,y];p.e=e;return p;};
+    for(let j=0;j<Ny;j++){
+      for(let i=0;i<Nx;i++){
         const tl=val(j,i),tr=val(j,i+1),bl=val(j+1,i),br=val(j+1,i+1);
-        const x0=i*step,y0=j*step,x1=x0+step,y1=y0+step;
+        const x0=i*stepX,y0=j*stepY,x1=x0+stepX,y1=y0+stepY;
         const pts=[];
-        if((tl>0)!==(tr>0))pts.push([lp(tl,tr,x0,x1),y0]);
-        if((tr>0)!==(br>0))pts.push([x1,lp(tr,br,y0,y1)]);
-        if((bl>0)!==(br>0))pts.push([lp(bl,br,x0,x1),y1]);
-        if((tl>0)!==(bl>0))pts.push([x0,lp(tl,bl,y0,y1)]);
+        if((tl>0)!==(tr>0))pts.push(P(lp(tl,tr,x0,x1),y0,j*Nx+i));
+        if((tr>0)!==(br>0))pts.push(P(x1,lp(tr,br,y0,y1),HOFF+j*(Nx+1)+i+1));
+        if((bl>0)!==(br>0))pts.push(P(lp(bl,br,x0,x1),y1,(j+1)*Nx+i));
+        if((tl>0)!==(bl>0))pts.push(P(x0,lp(tl,bl,y0,y1),HOFF+j*(Nx+1)+i));
         if(pts.length===2)segs.push([pts[0],pts[1]]);
         else if(pts.length===4){
+          // Sella: decide il segno del punto di sella dell'interpolante
+          // bilineare, a parità le regioni positive restano separate. Niente
+          // incrocio a X: le forme a "8" sono tracciati degeneri in Illustrator.
           const D=tl-tr-bl+br;
-          if(Math.abs(D)>1e-9){
-            const u=Math.max(0,Math.min(1,(tl-bl)/D)),v=Math.max(0,Math.min(1,(tl-tr)/D));
-            const sp=[x0+u*step,y0+v*step];
-            segs.push([pts[0],sp]);segs.push([sp,pts[2]]);
-            segs.push([pts[3],sp]);segs.push([sp,pts[1]]);
-          } else {
-            const cz=(tl+tr+bl+br)*0.25;
-            if((cz>0)===(tl>0)){segs.push([pts[0],pts[1]]);segs.push([pts[3],pts[2]]);}
-            else{segs.push([pts[0],pts[3]]);segs.push([pts[1],pts[2]]);}
-          }
+          const s=Math.abs(D)>1e-12?(tl*br-tr*bl)/D:(tl+tr+bl+br)*0.25;
+          if((s>0)===(tl>0)){segs.push([pts[0],pts[1]]);segs.push([pts[3],pts[2]]);}
+          else{segs.push([pts[0],pts[3]]);segs.push([pts[1],pts[2]]);}
         }
       }
     }
@@ -438,7 +517,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
   // ── Vector: concatena i segmenti in polilinee continue ───
   function chainSegs(segs){
-    const key=p=>Math.round(p[0]*64)+'_'+Math.round(p[1]*64);
+    const key=p=>p.e;
     const map=new Map();
     for(let i=0;i<segs.length;i++){
       for(const e of[0,1]){
@@ -524,10 +603,19 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
 
   function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t;}return a||1;}
-  function fixN(t){t=Math.round(t);if(t%2===0)t++;let g=0;while((gcd(t,FX1)!==1||gcd(t,FY1)!==1)&&g<60){t+=2;g++;}return t;}
-  function autoRes(){
-    const f=Math.max(FX1,FY1,1);
-    return fixN(Math.max(220,Math.min(560,Math.round(44*f))));
+  // Risoluzione dispari e coprima con le frequenze dell'asse: la griglia non
+  // cade sulle linee nodali dritte, che darebbero incroci smussati.
+  function fixN(t,freq){t=Math.round(t);if(t%2===0)t++;let g=0;while(gcd(t,freq)!==1&&g<60){t+=2;g++;}return t;}
+  function autoResBase(){
+    const g=geom(),f=Math.max(g.ax,g.ay,g.bx,g.by,1);
+    return Math.max(220,Math.min(560,Math.round(44*f)));
+  }
+  // Nx,Ny da una cella comune rapportata al lato lungo (celle circa quadrate).
+  // Su tavola quadrata Nx=Ny: due griglie diverse rompono la simmetria diagonale.
+  function gridDims(baseRes){
+    const cell=Math.max(W,H)/baseRes,g=geom();
+    if(W===H){const n=fixN(Math.max(20,Math.round(W/cell)),g.ax*g.ay*g.bx*g.by);return[n,n];}
+    return[fixN(Math.max(20,Math.round(W/cell)),g.ax*g.bx),fixN(Math.max(20,Math.round(H/cell)),g.ay*g.by)];
   }
 
   // ── Vector: polilinea → path SVG (lineare o Bézier Catmull-Rom) ──
@@ -562,37 +650,31 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
 
   // ── Vector: ricalcolo completo ───────────────────────────
-  function computeVectors(){
-    // Durante il drag delle sorgenti usa metà risoluzione per fluidità
-    const N=drag>=0?fixN(Math.max(121,autoRes()/2)):autoRes();
-    const step=PS/N,Z=sampleField(N);
-    const at=(j,i)=>Z[j*(N+1)+i];
-    const border=(j,i)=>i===0||j===0||i===N||j===N;
-    // epsilon rompe gli zeri esatti (bordi e nodi cadono esattamente a 0)
+  function buildVectors(baseRes){
+    const[Nx,Ny]=gridDims(baseRes);
+    const stepX=W/Nx,stepY=H/Ny,Z=sampleField(Nx,Ny);
+    const at=(j,i)=>Z[j*(Nx+1)+i];
+    const border=(j,i)=>i===0||j===0||i===Nx||j===Ny;
+    // Gli zeri esatti prendono un segno fisso, sempre lo stesso
     const outlineVal=(j,i)=>{const v=at(j,i);return v===0?1e-9:v;};
     // Bordo forzato negativo → tutti i contorni del fill si chiudono nel dominio
     const bandVal=(j,i)=>{if(border(j,i))return -1e-4;const v=BANDEPS-Math.abs(at(j,i));return v===0?1e-9:v;};
     const regionVal=(j,i)=>{if(border(j,i))return -1e-4;const v=at(j,i);return v===0?-1e-9:v;};
-
-    const tol=Math.max(0.08,Math.min(0.6,step*0.12));
-    let fillChains=[];
-    if(FILLMODE==='band')fillChains=chainSegs(marchSquares(bandVal,N,step));
-    else if(FILLMODE==='regions')fillChains=chainSegs(marchSquares(regionVal,N,step));
-    fillChains.forEach(c=>simplifyChain(c,tol));
-    // Contorni di fill non chiusi (casi numerici limite) vanno comunque chiusi
-    fillChains.forEach(c=>{c.closed=true;});
-
-    let outlineChains=[];
-    if(OUTLINE){
-      outlineChains=chainSegs(marchSquares(outlineVal,N,step));
-      outlineChains.forEach(c=>simplifyChain(c,tol));
-    }
-
-    vecFillChains=fillChains;
-    vecOutlineChains=outlineChains;
-    const fillD=fillChains.map(c=>chainToPath(c,1,SMOOTH)).join('');
+    const tol=Math.max(0.08,Math.min(0.6,Math.min(stepX,stepY)*0.12));
+    let fill=[];
+    if(FILLMODE==='band')fill=chainSegs(marchSquares(bandVal,Nx,Ny,stepX,stepY));
+    else if(FILLMODE==='regions')fill=chainSegs(marchSquares(regionVal,Nx,Ny,stepX,stepY));
+    fill.forEach(c=>simplifyChain(c,tol));
+    const outline=OUTLINE?chainSegs(marchSquares(outlineVal,Nx,Ny,stepX,stepY)):[];
+    outline.forEach(c=>simplifyChain(c,tol));
+    return{fill,outline};
+  }
+  function computeVectors(){
+    // Durante il drag delle sorgenti usa metà risoluzione per fluidità
+    const v=buildVectors(drag>=0?Math.max(121,autoResBase()/2):autoResBase());
+    const fillD=v.fill.map(c=>chainToPath(c,1,SMOOTH)).join('');
     vecFillPath=fillD?new Path2D(fillD):null;
-    vecOutlinePaths=outlineChains.map(c=>new Path2D(chainToPath(c,1,SMOOTH)));
+    vecOutlinePaths=v.outline.map(c=>new Path2D(chainToPath(c,1,SMOOTH)));
     vectorDirty=false;
   }
 
@@ -613,17 +695,17 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   function draw(){
     if(fieldDirty)renderField();
     ph+=.055;
-    cx.clearRect(0,0,W,H);cx.fillStyle='#0c0c16';cx.fillRect(0,0,PS,PS);
+    cx.clearRect(0,0,W,H);cx.fillStyle='#0c0c16';cx.fillRect(0,0,W,H);
     cx.strokeStyle='rgba(50,48,90,.15)';cx.lineWidth=.5;
-    cx.beginPath();cx.moveTo(PS/2,0);cx.lineTo(PS/2,PS);cx.moveTo(0,PS/2);cx.lineTo(PS,PS/2);cx.stroke();
+    cx.beginPath();cx.moveTo(W/2,0);cx.lineTo(W/2,H);cx.moveTo(0,H/2);cx.lineTo(W,H/2);cx.stroke();
     const bAmt=boostLeft/BOOST_FRAMES;
     const bA=(.18+Math.sin(ph)*.07+bAmt*.4).toFixed(2);
     cx.strokeStyle=`rgba(90,82,188,${bA})`;cx.lineWidth=1.2+bAmt*1.8;
-    cx.strokeRect(.6,.6,PS-1.2,PS-1.2);
+    cx.strokeRect(.6,.6,W-1.2,H-1.2);
 
     if(handlesOn&&fieldAlpha>0){
       fieldAlpha=Math.max(0,fieldAlpha-0.018);
-      if(fieldCv){cx.globalAlpha=fieldAlpha;cx.drawImage(fieldCv,0,0,PS,PS);cx.globalAlpha=1;}
+      if(fieldCv){cx.globalAlpha=fieldAlpha;cx.drawImage(fieldCv,0,0,W,H);cx.globalAlpha=1;}
     }
     drawHandles();
 
@@ -636,7 +718,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   function outlineStroke(){return FILLMODE==='band'?'rgba(127,119,221,.95)':'rgba(235,238,255,.92)';}
 
   function drawVector(){
-    cx.clearRect(0,0,W,H);cx.fillStyle='#0c0c16';cx.fillRect(0,0,PS,PS);
+    cx.clearRect(0,0,W,H);cx.fillStyle='#0c0c16';cx.fillRect(0,0,W,H);
     if(vecFillPath){
       cx.fillStyle='rgba(235,238,255,.92)';
       cx.fill(vecFillPath,'evenodd');
@@ -652,7 +734,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     cx.strokeStyle=outlineStroke();
     cx.lineWidth=STROKEW;cx.lineJoin='miter';cx.lineCap='butt';
     const ins=STROKEW/2;
-    cx.strokeRect(ins,ins,PS-STROKEW,PS-STROKEW);
+    cx.strokeRect(ins,ins,W-STROKEW,H-STROKEW);
     drawHandles();
   }
 
@@ -670,11 +752,11 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   function doDrag(i,rx,ry){
     if(symMode){
       let x=rx,y=ry;
-      if(i===1||i===3)x=PS-x;if(i===2||i===3)y=PS-y;
-      hx2=clampH(x);hy2=clampH(y);
+      if(i===1||i===3)x=W-x;if(i===2||i===3)y=H-y;
+      hx2=clampHDim(x,W);hy2=clampHDim(y,H);
     } else {
-      srcPos[i][0]=Math.max(2,Math.min(PS-2,rx));
-      srcPos[i][1]=Math.max(2,Math.min(PS-2,ry));
+      srcPos[i][0]=Math.max(2,Math.min(W-2,rx));
+      srcPos[i][1]=Math.max(2,Math.min(H-2,ry));
     }
     fieldAlpha=1.0;markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
   }
@@ -711,6 +793,48 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     nb.addEventListener('change',()=>apply(+nb.value));
     nb.addEventListener('keydown',e=>{if(e.key==='Enter')apply(+nb.value);});
   })();
+
+  // ── Format tavola ─────────────────────────────────────────
+  const bf11=document.getElementById('bf11'),bf45=document.getElementById('bf45'),
+        bf916=document.getElementById('bf916'),bfcu=document.getElementById('bfcu'),
+        customfmt=document.getElementById('customfmt'),
+        ncw=document.getElementById('ncw'),nch=document.getElementById('nch');
+  function setFormatBtns(active){
+    [['bf11',bf11],['bf45',bf45],['bf916',bf916],['bfcu',bfcu]].forEach(([id,btn])=>btn.classList.toggle('on',id===active));
+    customfmt.classList.toggle('m2-off',active!=='bfcu');
+  }
+  function setRatio(id,rw,rh){
+    FORMAT={mode:'ratio',rw,rh,cw:FORMAT.cw,ch:FORMAT.ch};
+    setFormatBtns(id);
+    resize();markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
+  }
+  function setCustom(){
+    const w=Math.max(100,Math.min(4000,Math.round(+ncw.value)||1080));
+    const h=Math.max(100,Math.min(4000,Math.round(+nch.value)||1080));
+    ncw.value=w;nch.value=h;
+    FORMAT={mode:'custom',rw:FORMAT.rw,rh:FORMAT.rh,cw:w,ch:h};
+    setFormatBtns('bfcu');
+    resize();markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
+  }
+  bf11.addEventListener('click',()=>setRatio('bf11',1,1));
+  bf45.addEventListener('click',()=>setRatio('bf45',4,5));
+  bf916.addEventListener('click',()=>setRatio('bf916',9,16));
+  bfcu.addEventListener('click',setCustom);
+  ncw.addEventListener('change',()=>{if(FORMAT.mode==='custom')setCustom();});
+  nch.addEventListener('change',()=>{if(FORMAT.mode==='custom')setCustom();});
+  ncw.addEventListener('keydown',e=>{if(e.key==='Enter')setCustom();});
+  nch.addEventListener('keydown',e=>{if(e.key==='Enter')setCustom();});
+
+  const bastr=document.getElementById('bastr'),badns=document.getElementById('badns'),
+        bacrp=document.getElementById('bacrp');
+  function setAdapt(mode,id){
+    ADAPT=mode;
+    [['bastr',bastr],['badns',badns],['bacrp',bacrp]].forEach(([bid,btn])=>btn.classList.toggle('on',bid===id));
+    resize();markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
+  }
+  bastr.addEventListener('click',()=>setAdapt('stretch','bastr'));
+  badns.addEventListener('click',()=>setAdapt('density','badns'));
+  bacrp.addEventListener('click',()=>setAdapt('crop','bacrp'));
 
   // ── View mode & vector controls ──────────────────────────
   const bvp=document.getElementById('bvp'),bvv=document.getElementById('bvv');
@@ -795,19 +919,25 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
   btsym.addEventListener('click',()=>{
     if(symMode){initSrcPos();symMode=false;}
-    else{hx2=clampH(srcPos[0][0]);hy2=clampH(srcPos[0][1]);symMode=true;}
+    else{hx2=clampHDim(srcPos[0][0],W);hy2=clampHDim(srcPos[0][1],H);symMode=true;}
     updateLock();markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
   });
   updateLock();
-  document.getElementById('bsc').addEventListener('click',scatter);
+  document.getElementById('bsc').addEventListener('click',()=>{scatter();triggerBoost();});
   const bpa=document.getElementById('bpa');
   bpa.addEventListener('click',()=>{paused=!paused;bpa.textContent=paused?'▶ Resume':'⏸ Pause';bpa.classList.toggle('on',paused);});
 
   // ── Export SVG ───────────────────────────────────────────
+  // Lato lungo esportato a 1200px, l'altro proporzionale: stessa scala su
+  // entrambi gli assi, altrimenti la figura uscirebbe deformata.
+  function exportSize(){
+    const scale=1200/Math.max(W,H);
+    return[Math.round(W*scale),Math.round(H*scale),scale];
+  }
   function exportParticlesSVG(){
-    const size=1200,scale=size/PS;
-    const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
-      `<rect width="${size}" height="${size}" fill="#0c0c16"/>`];
+    const[outW,outH,scale]=exportSize();
+    const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}" viewBox="0 0 ${outW} ${outH}">`,
+      `<rect width="${outW}" height="${outH}" fill="#0c0c16"/>`];
     for(let i=0;i<NP;i++){
       const x=(ppx[i]*scale).toFixed(1),y=(ppy[i]*scale).toFixed(1);
       const r=Math.max(0.4,(pr[i]*PSIZE*scale)).toFixed(2);
@@ -819,24 +949,26 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
   // Gruppi separati (background / fill / outline) → layer distinti in Illustrator.
   // Il fill è un'unica path con fill-rule evenodd: i contorni annidati diventano fori.
+  // I vettori si ricalcolano a circa 1 px d'export per cella, non alla griglia
+  // dello schermo (~5 px): incroci netti e nessuna forma sottile persa.
   function exportVectorSVG(){
-    if(vectorDirty)computeVectors();
-    const size=1200,scale=size/PS;
-    const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
-      `<g id="background"><rect width="${size}" height="${size}" fill="#0c0c16"/></g>`];
-    if(vecFillChains.length){
-      const d=vecFillChains.map(c=>chainToPath(c,scale,SMOOTH)).join('');
+    const v=buildVectors(Math.max(autoResBase(),1200));
+    const[outW,outH,scale]=exportSize();
+    const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}" viewBox="0 0 ${outW} ${outH}">`,
+      `<g id="background"><rect width="${outW}" height="${outH}" fill="#0c0c16"/></g>`];
+    if(v.fill.length){
+      const d=v.fill.map(c=>chainToPath(c,scale,SMOOTH)).join('');
       parts.push(`<g id="fill"><path d="${d}" fill="#EBEEFF" fill-rule="evenodd" stroke="none"/></g>`);
     }
-    if(vecOutlineChains.length){
+    if(v.outline.length){
       const sw=(STROKEW*scale).toFixed(2);
       parts.push(`<g id="outline" fill="none" stroke="${outlineColor()}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">`);
-      for(const c of vecOutlineChains)parts.push(`<path d="${chainToPath(c,scale,SMOOTH)}"/>`);
+      for(const c of v.outline)parts.push(`<path d="${chainToPath(c,scale,SMOOTH)}"/>`);
       parts.push('</g>');
     }
     // Frame del bordo come rettangolo chiuso → forma chiusa editabile in Illustrator
     const bsw=STROKEW*scale,bins=bsw/2;
-    parts.push(`<g id="border"><rect x="${bins.toFixed(2)}" y="${bins.toFixed(2)}" width="${(size-bsw).toFixed(2)}" height="${(size-bsw).toFixed(2)}" fill="none" stroke="${outlineColor()}" stroke-width="${bsw.toFixed(2)}"/></g>`);
+    parts.push(`<g id="border"><rect x="${bins.toFixed(2)}" y="${bins.toFixed(2)}" width="${(outW-bsw).toFixed(2)}" height="${(outH-bsw).toFixed(2)}" fill="none" stroke="${outlineColor()}" stroke-width="${bsw.toFixed(2)}"/></g>`);
     parts.push('</svg>');
     return parts.join('');
   }
@@ -875,7 +1007,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         Z[j][i]=v===0?1e-9:v;
       }
     }
-    const segs=marchSquares((j,i)=>Z[j][i],cells,step);
+    const segs=marchSquares((j,i)=>Z[j][i],cells,cells,step,step);
     const f=v=>v.toFixed(2);
     let d='';
     for(const s of segs)d+=`M${f(s[0][0])},${f(s[0][1])}L${f(s[1][0])},${f(s[1][1])}`;
