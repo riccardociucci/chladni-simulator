@@ -2,7 +2,7 @@
 
 Interactive browser-based Chladni figure simulator. No installation, no dependencies — open the HTML file and it runs.
 
-Chladni figures are the geometric patterns that appear when sand on a vibrating plate accumulates along nodal lines, the points where vibration is zero. This simulator lets you explore them in real time, in both particle and vector form.
+Chladni figures are the geometric patterns that appear when sand on a vibrating plate accumulates along nodal lines, the points where vibration is zero. This simulator lets you explore them in real time, in both particle and vector form, on square or rectangular plates.
 
 ---
 
@@ -13,15 +13,36 @@ Chladni figures are the geometric patterns that appear when sand on a vibrating 
 | `index.html` | Particle mode — 25,000 sand grains in real time |
 | `chladnisimulator.html` | Full version — particles + vector rendering with SVG export |
 
+The previous version, with an always-square plate, is tagged `v1-originale`.
+
+---
+
+## Plate format
+
+| Format | Behaviour |
+|--------|-----------|
+| 1:1 · 4:5 · 9:16 | The plate keeps the chosen ratio and fits the available space |
+| Custom | Width and height in pixels (100–4000): the real canvas resolution, displayed scaled to fit |
+
+On non-square formats, **Adapt** decides how the square pattern becomes a rectangle:
+
+| Mode | What it does |
+|------|--------------|
+| Stretch | Recomputes the pattern on the rectangle with the same node counts — it looks stretched |
+| Density | Scales the node counts along the long axis so node spacing stays constant (default) |
+| Crop | Shows a centred window of the square pattern — the 1:1 figure, cropped |
+
+Density rounds each scaled node count to the nearest integer with the same parity as the original, because parity decides the mirror symmetries of the figure.
+
 ---
 
 ## Physics
 
 ### Mode 1 — Fourier
 
-z(x,y) = Base · sin(πmx)sin(πny) + Mirror · sin(πnx)sin(πmy)
+z(u,v) = Base · sin(π·aₓ·u)·sin(π·a_y·v) + Mirror · sin(π·bₓ·u)·sin(π·b_y·v)
 
-`m` and `n` control the number of nodes along X and Y. `Mirror = +1` produces symmetric patterns; `Mirror = −1` produces diagonal ones — shown in green in the UI.
+At 1:1, aₓ = b_y = m and a_y = bₓ = n, the classic sin(πmx)sin(πny) + sin(πnx)sin(πmy). `m` and `n` control the number of nodes along X and Y. `Mirror = +1` produces symmetric patterns; `Mirror = −1` produces diagonal ones — shown in green in the UI. On non-square plates each term gets its own frequency per axis (see Adapt).
 
 ### Mode 2 — Sources
 
@@ -37,16 +58,16 @@ Particles accumulate along interference nodes (zero-crossings of f). A Blend sli
 
 The vector pipeline extracts nodal lines as clean, exportable SVG paths.
 
-    autoRes()       → N = fixN(44·max(m,n)), odd and coprime with both m and n
-    sampleField(N)  → (N+1)×(N+1) grid, normalised to max|z|=1
-    marchSquares()  → isolines with bilinear saddle-point interpolation
-    chainSegs()     → segment graph → continuous polylines
+    gridDims()      → Nx×Ny grid, odd and coprime with the axis frequencies; Nx=Ny on square plates
+    sampleField()   → field on the grid, float noise snapped to exact zero, normalised to max|z|=1
+    marchSquares()  → isolines; each crossing tagged with the id of its grid edge
+    chainSegs()     → stitched by edge id → closed or open polylines
     simplifyChain() → RDP with canonical start for closed chains
     chainToPath()   → SVG path (polyline or Catmull-Rom Bézier)
 
-Fill modes: None · Band (region where |z| < threshold) · Regions (positive/negative areas).
+Fill modes: None · Band (region where |z| < threshold) · Regions (positive areas).
 Outline: optional stroke along the nodal lines.
-Export: 1200×1200 px SVG with named layers (background, fill, outline, border) — ready for Illustrator.
+Export: SVG with the long side at 1200 px and named layers (background, fill, outline, border) — ready for Illustrator. Vectors are recomputed at about 1 export pixel per grid cell, finer than the on-screen preview.
 
 ---
 
@@ -69,7 +90,7 @@ Export: 1200×1200 px SVG with named layers (background, fill, outline, border) 
 |-------|-------------------------------------|
 | V     | Toggle Particles / Vector           |
 | Space | Pause / resume (particles only)     |
-| R     | Scatter + boost (particles only)    |
+| R     | Reset particles + boost             |
 | S     | Export SVG                          |
 | F     | Fullscreen                          |
 | ← →   | Navigate presets                    |
@@ -83,12 +104,18 @@ Export: 1200×1200 px SVG with named layers (background, fill, outline, border) 
 
 ## Technical notes
 
-Coprime resolution — N is always odd and coprime with both m and n, so no grid sample falls exactly on a nodal line. This is the key to perfectly symmetric patterns at any mode combination.
+Coprime resolution — the grid size is odd and coprime with the frequencies of its axis, so straight nodal lines never fall on grid lines.
 
-Bilinear saddle-point — the classic marching squares saddle ambiguity is resolved with bilinear interpolation rather than the center-sign heuristic, producing geometrically exact X crossings.
+Zero snapping — diagonal nodal lines (x = y, x + y = 1) do pass through grid vertices, where the field is ±1e-16 with random sign. Values below 1e-9 of the maximum are set to exactly zero and given a fixed sign, so the line comes out whole instead of in fragments.
+
+Edge-id stitching — every crossing carries the id of the grid edge it lies on, and the two cells sharing an edge produce the same id. Contours are joined by topology, not by rounded coordinates: no merged points, no specks, and fill contours always close.
+
+Saddle decider — ambiguous marching-squares cells are resolved with the sign of the bilinear saddle point; ties keep positive regions apart. No X junctions, so no self-touching "figure 8" paths in Illustrator.
 
 Smooth toggle — off by default (clean polylines); when on, curves use Catmull-Rom Bézier with control vectors clamped to segLen/3 to prevent overshooting after simplification.
 
 Deterministic simplification — closed chains are rotated to a canonical start (leftmost point, then topmost) before RDP, making the output order-independent.
 
-Forced negative border — during fill marching squares, border samples are clamped to a small negative value so all fill contours close inside the domain, producing clean closed shapes in Illustrator.
+Forced negative border — during fill marching squares, border samples are clamped to a small negative value so all fill contours close inside the domain — at the artboard edge in Crop mode too.
+
+Resize — changing the window or the format rescales particles and sources instead of scattering them, so a formed pattern survives.
