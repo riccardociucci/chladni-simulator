@@ -65,9 +65,9 @@ The vector pipeline extracts nodal lines as clean, exportable SVG paths.
     simplifyChain() → RDP with canonical start for closed chains
     chainToPath()   → SVG path (polyline or Catmull-Rom Bézier)
 
-Fill modes: None · Band (region where |z| < threshold) · Regions (positive areas).
-Outline: optional stroke along the nodal lines.
-Export: SVG with the long side at 1200 px and named layers (background, fill, outline, border) — ready for Illustrator. Vectors are recomputed at about 1 export pixel per grid cell, finer than the on-screen preview.
+Fill modes: None · Band (region where |z| < threshold) · Regions (positive areas) · Cells (positive cells light, negative cells violet, each cell its own object).
+Outline: optional stroke along the nodal lines, drawn as closed contours of the positive cells.
+Export: SVG with the long side at 1200 px and named layers (background, fill or cells-positive / cells-negative, outline, border) — ready for Illustrator. Vectors are recomputed at about 1 export pixel per grid cell, finer than the on-screen preview.
 
 ---
 
@@ -117,5 +117,9 @@ Smooth toggle — off by default (clean polylines); when on, curves use Catmull-
 Deterministic simplification — closed chains are rotated to a canonical start (leftmost point, then topmost) before RDP, making the output order-independent.
 
 Forced negative border — during fill marching squares, border samples are clamped to a small negative value so all fill contours close inside the domain — at the artboard edge in Crop mode too.
+
+Closed outline — the outline reuses the contours of the positive cells. Every interior nodal line separates a positive cell from a negative one, so it appears exactly once, and every path is closed; where a cell touches the border the path runs along the frame.
+
+Cells — negative cells are traced like positive ones on the inverted field. For export, closed contours are grouped by nesting depth (even = outer boundary, odd = hole of its parent), so every cell, ring-shaped ones included, is a single path with its holes. Positive and negative cells tile the plate, apart from sub-pixel gaps along the nodal lines.
 
 Resize — changing the window or the format rescales particles and sources instead of scattering them, so a formed pattern survives.
