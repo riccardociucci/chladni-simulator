@@ -42,7 +42,7 @@ Density rounds each scaled node count to the nearest integer with the same parit
 
 z(u,v) = Base · sin(π·aₓ·u)·sin(π·a_y·v) + Mirror · sin(π·bₓ·u)·sin(π·b_y·v)
 
-At 1:1, aₓ = b_y = m and a_y = bₓ = n, the classic sin(πmx)sin(πny) + sin(πnx)sin(πmy). `m` and `n` control the number of nodes along X and Y. `Mirror = +1` produces symmetric patterns; `Mirror = −1` produces diagonal ones — shown in green in the UI. On non-square plates each term gets its own frequency per axis (see Adapt).
+At 1:1, aₓ = b_y = m and a_y = bₓ = n, the classic sin(πmx)sin(πny) + sin(πnx)sin(πmy). `m` and `n` control the number of nodes along X and Y. `Mirror = +1` produces symmetric patterns; `Mirror = −1` produces diagonal ones — shown in violet in the UI. On non-square plates each term gets its own frequency per axis (see Adapt).
 
 ### Mode 2 — Sources
 
@@ -68,6 +68,8 @@ The vector pipeline extracts nodal lines as clean, exportable SVG paths.
 Fill modes: None · Band (region where |z| < threshold) · Regions (positive areas) · Cells (positive cells light, negative cells violet, each cell its own object).
 Outline: optional stroke along the nodal lines, drawn as closed contours of the positive cells.
 Export: SVG with the long side at 1200 px and named layers (background, fill or cells-positive / cells-negative, outline, border) — ready for Illustrator. Vectors are recomputed at about 1 export pixel per grid cell, finer than the on-screen preview.
+
+Colours: the figure uses the Vibly palette — Black Dog `#1A1A1A` background, Snow White `#FAFAFA`, Purple Haze `#642BAC`.
 
 ---
 
@@ -96,9 +98,13 @@ Export: SVG with the long side at 1200 px and named layers (background, fill or 
 | ← →   | Navigate presets                    |
 | Esc   | Exit fullscreen                     |
 
+### Reproducible figures
+
+Every parameter that shapes the figure lives in the page address: the link reopens the same figure, and **Copy link** puts it on the clipboard. Exported files are named after their parameters (for example `chladni_m4n4_a1.00_b-1.00_9x16_density_band0.12.svg`), and each SVG carries the full parameter set and that link in its `<metadata>`. Particle positions are random, so a particle export matches the figure, not the exact grains.
+
 ### Presets
 
-43 presets across 4 groups (Base · Grid · Medium · Complex), each with a live SVG thumbnail generated via marching squares. White presets have Mirror = +1; green presets have Mirror = −1.
+43 presets across 4 groups (Base · Grid · Medium · Complex), each with a live SVG thumbnail generated via marching squares. White presets have Mirror = +1; violet presets have Mirror = −1.
 
 ---
 
