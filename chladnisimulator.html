@@ -39,7 +39,7 @@ button,input{font:inherit;color:inherit;}
 /* Resize handle: a hairline with a grip in the middle, always visible */
 #rh{width:5px;flex-shrink:0;cursor:col-resize;z-index:10;transition:background .15s;background:linear-gradient(var(--line-hi),var(--line-hi)) center/3px 28px no-repeat,linear-gradient(90deg,transparent 2px,var(--line) 2px,var(--line) 3px,transparent 3px);}
 #rh:hover,#rh.rh-drag{background:rgba(151,102,236,.4);}
-#canvaswrap{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;min-width:0;background:var(--bg);}
+#canvaswrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:8px;min-width:0;background:var(--bg);}
 canvas{display:block;cursor:crosshair;border-radius:4px;}
 h1{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em;}
 h1 span{color:var(--violet-400);}
@@ -97,6 +97,12 @@ svg.ic{width:14px;height:14px;flex-shrink:0;stroke:currentColor;fill:none;stroke
 .btn-icon{display:flex;align-items:center;justify-content:center;gap:6px;}
 .btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 10px;background:var(--violet);border-color:var(--violet);color:var(--text);font-weight:600;}
 .btn-primary:hover{background:var(--violet-hi);border-color:var(--violet-hi);color:var(--text);}
+.act-row{display:grid;grid-template-columns:34px 34px 1fr 34px;gap:4px;}
+.act-row button{padding-left:4px;padding-right:4px;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+/* Shown on the plate while the simulation is paused; a click resumes it */
+.paused-badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;gap:6px;padding:6px 12px;border:none;border-radius:999px;background:var(--violet-on);color:var(--violet-200);font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.5);}
+.paused-badge:hover{background:var(--violet);color:var(--text);}
 #status{font-size:12px;color:var(--violet-200);min-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s;}
 #status.show{opacity:1;}
 .kbhint{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);}
@@ -193,6 +199,11 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
         <h2 class="stitle" id="t-mode1">Mode 1 — Fourier</h2>
         <p class="eq">Base·sin(πmx)sin(πny)<br>+ Mirror·sin(πnx)sin(πmy)</p>
         <div class="stack">
+          <div>
+            <h3 class="sublbl" style="margin-top:0;">Presets</h3>
+            <p class="legend"><span><i style="background:var(--text);"></i>Mirror +1</span><span><i style="background:var(--violet-400);"></i>Mirror −1</span></p>
+            <div id="preset-container"></div>
+          </div>
           <div class="ctrl">
             <div class="row"><label class="lbl" for="nfx">Nodes X</label><input type="number" id="nfx" value="3" min="1" max="10" step="1"></div>
             <input type="range" id="sfx" min="1" max="10" value="3" step="1">
@@ -211,11 +222,6 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
               <div class="row"><label class="lbl" for="nb1">Mirror</label><input type="number" id="nb1" value="1.00" min="-2" max="2" step="0.05" style="width:48px"></div>
               <input type="range" id="sb1" min="-2" max="2" value="1" step="0.05">
             </div>
-          </div>
-          <div>
-            <h3 class="sublbl">Presets</h3>
-            <p class="legend"><span><i style="background:var(--text);"></i>Mirror +1</span><span><i style="background:var(--violet-400);"></i>Mirror −1</span></p>
-            <div id="preset-container"></div>
           </div>
         </div>
       </section>
@@ -276,13 +282,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
 
       <hr class="sep">
 
-      <div class="stack">
-        <div class="ab-row">
-          <button id="bundo" class="btn-icon" disabled><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5l-3 3 3 3M2.5 6.5H10a3.5 3.5 0 0 1 0 7H8"/></svg>Undo</button>
-          <button id="bredo" class="btn-icon" disabled><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 3.5l3 3-3 3M13.5 6.5H6a3.5 3.5 0 0 0 0 7h2"/></svg>Redo</button>
-        </div>
-        <button id="bdef" class="btn-icon">Restore defaults</button>
-      </div>
+      <button id="bdef" class="btn-icon">Restore defaults</button>
 
       <p class="kbhint">
         <span><kbd>V</kbd> view</span>
@@ -298,15 +298,18 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
 
     <div id="sb-actions">
       <button id="bsvg" class="btn-primary"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg><span id="bsvg-txt">Export SVG · Particles</span></button>
-      <div class="ab-row">
+      <div class="act-row">
+        <button id="bundo" class="btn-icon" disabled aria-label="Undo" title="Undo"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5l-3 3 3 3M2.5 6.5H10a3.5 3.5 0 0 1 0 7H8"/></svg></button>
+        <button id="bredo" class="btn-icon" disabled aria-label="Redo" title="Redo"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 3.5l3 3-3 3M13.5 6.5H6a3.5 3.5 0 0 0 0 7h2"/></svg></button>
         <button id="blink" class="btn-icon" title="Copy a link that reopens this exact figure"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5l3-3M7.2 4.3l1-1a2.8 2.8 0 0 1 4 4l-1 1M8.8 11.7l-1 1a2.8 2.8 0 0 1-4-4l1-1"/></svg>Copy link</button>
-        <button id="bfs" class="btn-icon" data-toggle><svg class="ic" id="bfs-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg><span id="bfs-txt">Fullscreen</span></button>
+        <button id="bfs" class="btn-icon" data-toggle title="Fullscreen"><svg class="ic" id="bfs-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg><span id="bfs-txt" class="sr">Fullscreen</span></button>
       </div>
       <p id="status" role="status" aria-live="polite"></p>
     </div>
   </aside>
   <div id="rh" role="separator" aria-orientation="vertical" aria-label="Resize the controls panel"></div>
   <main id="canvaswrap">
+    <button id="bpaused" class="paused-badge" hidden><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2l7.5 4.8L5 12.8z"/></svg>Paused · Resume</button>
     <canvas id="chl" role="img" aria-label="Chladni figure"></canvas>
   </main>
 </div>
@@ -804,7 +807,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     cx.strokeStyle='rgba(151,102,236,.10)';cx.lineWidth=.5;
     cx.beginPath();cx.moveTo(W/2,0);cx.lineTo(W/2,H);cx.moveTo(0,H/2);cx.lineTo(W,H/2);cx.stroke();
     const bAmt=boostLeft/BOOST_FRAMES;
-    const bA=(.18+Math.sin(ph)*.07+bAmt*.4).toFixed(2);
+    const bA=(.18+bAmt*.4).toFixed(2);
     cx.strokeStyle=`rgba(151,102,236,${bA})`;cx.lineWidth=1.2+bAmt*1.8;
     cx.strokeRect(.6,.6,W-1.2,H-1.2);
 
@@ -846,12 +849,15 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     drawHandles();
   }
 
+  // While paused the grains stand still, but the plate is still redrawn a few
+  // times a second so size, format and source changes stay visible.
+  let lastStill=0;
   function loop(){
     refreshThumbs();updateEffective();
     if(!paused){
       if(viewMode==='particles'){step();draw();}
       else{if(vectorDirty)computeVectors();drawVector();}
-    }
+    } else if(performance.now()-lastStill>200){lastStill=performance.now();draw();}
     requestAnimationFrame(loop);
   }
 
@@ -1025,12 +1031,15 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   updateLock();
   document.getElementById('bsc').addEventListener('click',()=>{scatter();triggerBoost();});
   const bpa=document.getElementById('bpa');
+  const bpaused=document.getElementById('bpaused');
+  bpaused.addEventListener('click',()=>setPaused(false));
   const bpaIc=document.getElementById('bpa-ic'),bpaTxt=document.getElementById('bpa-txt');
   function setPaused(p){
     paused=p;
     bpaTxt.textContent=paused?'Resume':'Pause';
     bpaIc.innerHTML=paused?'<path d="M5 3.2l7.5 4.8L5 12.8z"/>':'<path d="M5.5 3.5v9M10.5 3.5v9"/>';
     bpa.classList.toggle('on',paused);
+    bpaused.hidden=!paused;
   }
   bpa.addEventListener('click',()=>setPaused(!paused));
 
@@ -1311,7 +1320,10 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   // On non-square plates the node counts actually drawn differ from Nodes X/Y.
   const effEl=document.getElementById('effnodes');
   let effTxt=null;
+  const densityHint=document.getElementById('densityhint');
   function updateEffective(){
+    const square=!(W&&H&&W!==H);
+    if(densityHint.hidden!==square)densityHint.hidden=square;
     let s='';
     if(W&&H&&W!==H&&ADAPT==='density'){const g=geom();s=`Nodes on this plate, X × Y: Base ${g.ax} × ${g.ay}, Mirror ${g.bx} × ${g.by}`;}
     else if(W&&H&&W!==H&&ADAPT==='crop')s=`Cropped from the square ${FX1} × ${FY1} pattern`;
@@ -1470,6 +1482,12 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   document.querySelectorAll(pressable).forEach(syncPressed);
   new MutationObserver(ms=>ms.forEach(m=>{if(m.target.matches(pressable))syncPressed(m.target);}))
     .observe(document.getElementById('sidebar'),{subtree:true,attributes:true,attributeFilter:['class']});
+  // A button clicked with the pointer gives the focus back to the page, so
+  // Space keeps meaning pause; keyboard users keep their focus.
+  document.addEventListener('click',e=>{
+    const b=e.target instanceof Element&&e.target.closest('button');
+    if(b&&e.detail>0)b.blur();
+  });
   // Each slider takes its name from the label of its number field.
   document.querySelectorAll('.ctrl').forEach(c=>{
     const l=c.querySelector('label.lbl'),r=c.querySelector('input[type=range]');
@@ -1486,6 +1504,8 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   setView('vector');   // the full version opens on the view you export from
   const DEFAULT_Q=stateQuery();
   readHash();
+  const curPreset=document.querySelector('.preset-btn.on');
+  if(curPreset)curPreset.closest('.pgroup').querySelector('.pgroup-header').click();
   syncHash();
   setInterval(syncHash,250);
   window.addEventListener('hashchange',readHash);
