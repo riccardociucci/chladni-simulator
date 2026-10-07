@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chladni Plate</title>
+<title>Chladni Simulator</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:#0b0b13;color:#ccc;font-family:system-ui,sans-serif;overflow:hidden;}
@@ -59,7 +59,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 <body>
 <div id="app">
   <div id="sidebar">
-    <div style="font-size:13px;font-weight:700;color:#aaa;">Chladni</div>
+    <div style="font-size:13px;font-weight:700;color:#aaa;">Chladni <span style="color:#7F77DD;">Simulator</span></div>
 
     <!-- FORMAT -->
     <div>
@@ -79,13 +79,13 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
             <div class="row"><span class="lbl">Height</span><input type="number" id="nch" value="1080" min="100" max="4000" step="1" style="width:56px"></div>
           </div>
         </div>
-        <div class="hint2" style="margin-top:2px;">Pixel, risoluzione reale del canvas.</div>
+        <div class="hint2" style="margin-top:2px;">Pixels: the real canvas resolution.</div>
       </div>
-      <div class="lbl" style="margin-top:6px;margin-bottom:2px;">Adatta</div>
+      <div class="lbl" style="margin-top:6px;margin-bottom:2px;">Adapt</div>
       <div class="ab-row3">
-        <button id="bastr" title="Fisica ricalcolata su W×H: a nodi fissi il pattern risulta stirato">Stretch</button>
-        <button id="badns" class="on" title="Come Stretch ma i nodi sull'asse lungo si scalano per non stirare">Density</button>
-        <button id="bacrp" title="Pattern quadrato congelato, scalato a coprire il formato (ritaglia)">Crop</button>
+        <button id="bastr" title="Physics recomputed on W×H: with fixed node counts the pattern looks stretched">Stretch</button>
+        <button id="badns" class="on" title="Like Stretch, but the nodes on the long axis are scaled so the pattern is not stretched">Density</button>
+        <button id="bacrp" title="Square pattern, scaled to cover the format and cropped">Crop</button>
       </div>
     </div>
 
@@ -95,7 +95,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     <div>
       <div class="stitle">Mode 1 — Fourier</div>
       <div class="eq">Base·sin(πmx)sin(πny)<br>+ Mirror·sin(πnx)sin(πmy)</div>
-      <div class="hint2" id="densityhint" style="margin-top:1px;">Su formati non 1:1 conta la modalità Adatta — Density scala i nodi sull'asse lungo, Crop congela il pattern al quadrato e lo ritaglia.</div>
+      <div class="hint2" id="densityhint" style="margin-top:1px;">On non-square formats the Adapt mode matters — Density scales the nodes on the long axis, Crop keeps the square pattern and crops it.</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px;">
         <div class="ctrl">
           <div class="row"><span class="lbl">Nodes X</span><input type="number" id="nfx" value="3" min="1" max="10" step="1"></div>
@@ -223,10 +223,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   ];
 
   // ── Canvas / resize ──────────────────────────────────────
-  // Formato tavola: 'ratio' adatta W,H al riquadro disponibile mantenendo il
-  // rapporto scelto; 'custom' fissa la risoluzione reale del canvas ai pixel
-  // richiesti, mostrata scalata via CSS. PS=min(W,H) è la scala isotropica per
-  // ciò che non ha direzione: hit-radius maniglie, numero d'onda K del Modo 2.
+  // Plate format: 'ratio' fits W,H to the available area keeping the chosen
+  // ratio; 'custom' sets the real canvas resolution to the requested pixels,
+  // displayed scaled via CSS. PS=min(W,H) is the isotropic scale for anything
+  // without a direction: handle hit radius, Mode 2 wave number K.
   const cv=document.getElementById('chl'), cx=cv.getContext('2d');
   const wrap=document.getElementById('canvaswrap');
   let W=0,H=0,PS=100;
@@ -248,8 +248,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     if(nW===W&&nH===H)return;
     const sx=W?nW/W:1,sy=H?nH/H:1;
     W=nW;H=nH;PS=Math.min(W,H);cv.width=W;cv.height=H;
-    // Particelle e sorgenti si riscalano con la tavola invece di ripartire da
-    // zero: ridimensionare la finestra non cancella la figura già formata.
+    // Particles and sources are rescaled with the plate instead of starting
+    // over: resizing the window does not wipe out a pattern already formed.
     if(ppx&&ppx.length===NP){for(let i=0;i<NP;i++){ppx[i]*=sx;ppy[i]*=sy;}}
     else scatter();
     hx2=clampHDim(hx2?hx2*sx:W*0.3,W);hy2=clampHDim(hy2?hy2*sy:H*0.3,H);
@@ -260,27 +260,27 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   const clampHDim=(v,dim)=>Math.max(Math.max(12,dim*0.02),Math.min(dim/2-8,isFinite(v)&&v>0?v:dim*0.3));
 
   // ── Params ───────────────────────────────────────────────
-  let FX1=3,FY1=5,A1=1,B1=1;          // Modo 1: Fourier
+  let FX1=3,FY1=5,A1=1,B1=1;          // Mode 1: Fourier
   let hx2=0,hy2=0,K2=6,handlesOn=false,symMode=true;
-  let srcPos=[[0,0],[0,0],[0,0],[0,0]]; // posizioni indipendenti (usate quando symMode=false)
+  let srcPos=[[0,0],[0,0],[0,0],[0,0]]; // independent positions (used when symMode=false)
   let MIX=0.5;
   let NP=25000,VIB=0.15,PSIZE=0.6,paused=false;
   const FK_BASE=0.5,DAMP_BASE=0.97,FK_BOOST=5.0,DAMP_BOOST=0.80,BOOST_FRAMES=150;
   let boostLeft=0;
   function triggerBoost(){boostLeft=BOOST_FRAMES;}
 
-  // Adattamento sui formati non quadrati (28/09/2026). Tutto vive in
-  // coordinate canvas: cambia solo come (x,y) si mappa nel dominio unitario
-  // (u,v) della formula e con quali frequenze. 'stretch' ricalcola la figura
-  // sul rettangolo a nodi fissi, e risulta stirata; 'density' scala i nodi
-  // dell'asse lungo per tenerne costante la spaziatura; 'crop' è una finestra
-  // centrata sulla figura quadrata di lato max(W,H), cioè l'1:1 ritagliato.
+  // Adapting to non-square formats. Everything lives in canvas coordinates:
+  // only the mapping of (x,y) into the formula's unit domain (u,v) and the
+  // frequencies change. 'stretch' recomputes the pattern on the rectangle
+  // with fixed node counts, so it looks stretched; 'density' scales the nodes
+  // on the long axis to keep their spacing constant; 'crop' is a centred
+  // window onto the square pattern of side max(W,H), the 1:1 figure cropped.
   let ADAPT='density'; // 'stretch' | 'density' | 'crop'
-  // Intero più vicino con la stessa parità di p: la parità dei nodi decide le
-  // simmetrie a specchio della figura, arrotondare liberamente le rompe.
+  // Nearest integer with the same parity as p: node parity decides the mirror
+  // symmetries of the figure, and free rounding would break them.
   function parityRound(v,p){let r=Math.round(v);if(Math.abs(r-p)%2===1)r+=v>r?1:-1;return Math.max(p,Math.min(p%2?59:60,r));}
-  // Frequenze per asse dei due termini: Base = sin(π·ax·u)·sin(π·ay·v),
-  // Mirror = sin(π·bx·u)·sin(π·by·v). A 1:1 ax=by=m e ay=bx=n.
+  // Per-axis frequencies of the two terms: Base = sin(π·ax·u)·sin(π·ay·v),
+  // Mirror = sin(π·bx·u)·sin(π·by·v). At 1:1 ax=by=m and ay=bx=n.
   function geom(){
     const m=FX1,n=FY1;
     if(ADAPT==='crop'){const L=Math.max(W,H);return{ox:(L-W)/2,oy:(L-H)/2,Lx:L,Ly:L,ax:m,ay:n,bx:n,by:m};}
@@ -307,10 +307,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     for(let i=0;i<NP;i++){pvx[i]=(Math.random()-.5)*k;pvy[i]=(Math.random()-.5)*k;}
   }
 
-  // ── Physics: Modo 1 (Fourier) ─────────────────────────────
-  // z = a·sin(π·ax·u)·sin(π·ay·v) + b·sin(π·bx·u)·sin(π·by·v), con
-  // u=(x+ox)/Lx e v=(y+oy)/Ly (vedi geom). Le derivate si dividono per Lx e Ly
-  // separati: su tavola rettangolare le due direzioni hanno scale diverse.
+  // ── Physics: Mode 1 (Fourier) ─────────────────────────────
+  // z = a·sin(π·ax·u)·sin(π·ay·v) + b·sin(π·bx·u)·sin(π·by·v), with
+  // u=(x+ox)/Lx and v=(y+oy)/Ly (see geom). Derivatives are divided by Lx and
+  // Ly separately: on a rectangular plate the two directions have different scales.
   const PI=Math.PI;
   function forceFourier(g,a,b,xi,yi){
     const u=(xi+g.ox)/g.Lx,v=(yi+g.oy)/g.Ly;
@@ -322,8 +322,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return[-2*z*dzdx,-2*z*dzdy];
   }
 
-  // ── Physics: Modo 2 (onde circolari da 4 sorgenti) ────────
-  // f(x,y) = Σᵢ cos(K·rᵢ)   dove rᵢ = dist da sorgente i
+  // ── Physics: Mode 2 (circular waves from 4 sources) ───────
+  // f(x,y) = Σᵢ cos(K·rᵢ)   where rᵢ = distance from source i
   // F = -∇(f²) = -2f·∇f
   // ∂f/∂x = Σᵢ -K·sin(K·rᵢ)·(x-sx)/rᵢ
   function forceCircular(K,xi,yi){
@@ -342,7 +342,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return[-2*f*dfdx,-2*f*dfdy];
   }
 
-  // ── Campo d'interferenza (offscreen, aggiornato solo al cambio parametri) ──
+  // ── Interference field (offscreen, updated only when parameters change) ────
   let fieldCv=null,fieldCtx2=null,fieldDirty=true,fieldAlpha=0;
   function markFieldDirty(){fieldDirty=true;}
 
@@ -359,7 +359,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         const xi=i/fw*W,yi=j/fh*H;
         let z=0;
         for(let s=0;s<4;s++){const dx=xi-srcs[s][0],dy=yi-srcs[s][1],r=Math.sqrt(dx*dx+dy*dy);if(r>0.5)z+=Math.cos(K*r);}
-        // Linee nodali (z≈0) brillano, antinodi (|z| grande) scuri
+        // Nodal lines (z≈0) glow, antinodes (large |z|) are dark
         const norm=Math.min(1,Math.abs(z)/4);
         const alpha=Math.round(Math.pow(1-norm,3)*80);
         const idx=(j*fw+i)*4;
@@ -421,12 +421,12 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     cx.strokeRect(.6,.6,W-1.2,H-1.2);
 
     if(handlesOn){
-      // Overlay campo: visibile durante il drag, svanisce dopo il rilascio
+      // Field overlay: visible while dragging, fades out after release
       if(fieldAlpha>0){
         fieldAlpha=Math.max(0,fieldAlpha-0.018);
         if(fieldCv){cx.globalAlpha=fieldAlpha;cx.drawImage(fieldCv,0,0,W,H);cx.globalAlpha=1;}
       }
-      // Maniglie
+      // Handles
       const srcs=getSources(),hr=Math.max(8,PS*0.016);
       for(let si=0;si<4;si++){
         const[sx,sy]=srcs[si],act=(si===drag||si===hov);
@@ -442,7 +442,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
   function loop(){if(!paused){step();draw();}requestAnimationFrame(loop);}
 
-  // ── Pointer (solo handle drag, nessuna interazione particelle) ───────────
+  // ── Pointer (handle drag only, no particle interaction) ──────────────────
   function getXY(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*(W/r.width),(e.clientY-r.top)*(H/r.height)];}
   function getTXY(e){const r=cv.getBoundingClientRect(),t=e.touches[0];return[(t.clientX-r.left)*(W/r.width),(t.clientY-r.top)*(H/r.height)];}
   function doDrag(i,rx,ry){
@@ -487,7 +487,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     nb.addEventListener('keydown',e=>{if(e.key==='Enter')apply(+nb.value);});
   })();
 
-  // ── Format tavola ─────────────────────────────────────────
+  // ── Plate format ──────────────────────────────────────────
   const bf11=document.getElementById('bf11'),bf45=document.getElementById('bf45'),
         bf916=document.getElementById('bf916'),bfcu=document.getElementById('bfcu'),
         customfmt=document.getElementById('customfmt'),
@@ -570,8 +570,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   bpa.addEventListener('click',()=>{paused=!paused;bpa.textContent=paused?'▶ Resume':'⏸ Pause';bpa.classList.toggle('on',paused);});
 
   document.getElementById('bsvg').addEventListener('click',()=>{
-    // Lato lungo esportato a 1200px, l'altro proporzionale: stessa scala su
-    // entrambi gli assi, altrimenti la figura uscirebbe deformata.
+    // Long side exported at 1200px, the other proportional: the same scale on
+    // both axes, otherwise the figure would come out distorted.
     const scale=1200/Math.max(W,H),size=[Math.round(W*scale),Math.round(H*scale)];
     const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${size[0]} ${size[1]}">`,
       `<rect width="${size[0]}" height="${size[1]}" fill="#0c0c16"/>`];
@@ -603,7 +603,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
   function generateThumb(m,n,a,b){
     const sz=44,cells=48,step=sz/cells;
-    // Griglia z — epsilon rompe gli zeri esatti ai corner (evita casi degeneri)
+    // z grid — epsilon breaks exact zeros at the corners (avoids degenerate cases)
     const Z=[];
     for(let j=0;j<=cells;j++){
       Z[j]=new Float32Array(cells+1);
@@ -628,10 +628,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         if(pts.length===2){
           d+=`M${f(pts[0][0])},${f(pts[0][1])}L${f(pts[1][0])},${f(pts[1][1])}`;
         } else if(pts.length===4){
-          // Caso saddle: il segno del centro decide quale diagonale usare.
-          // (cz>0)==(tl>0) → il centro concorda con tl → la regione tl-br è dominante
-          //   → il contorno circonda tr e bl: top-right e left-bottom
-          // Altrimenti → circonda tl e br: top-left e right-bottom
+          // Saddle case: the sign of the centre decides which diagonal to use.
+          // (cz>0)==(tl>0) → the centre agrees with tl → the tl-br region dominates
+          //   → the contour surrounds tr and bl: top-right and left-bottom
+          // Otherwise → it surrounds tl and br: top-left and right-bottom
           const cz=(tl+tr+bl+br)*0.25;
           if((cz>0)===(tl>0)){
             d+=`M${f(pts[0][0])},${f(pts[0][1])}L${f(pts[1][0])},${f(pts[1][1])}`;
@@ -687,10 +687,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
 
       hdr.addEventListener('click',()=>{
         const isOpen=content.classList.contains('open');
-        // Chiudi tutti
+        // Close all
         allContents.forEach(c=>c.classList.remove('open'));
         allHeaders.forEach(h=>h.classList.remove('open'));
-        // Se era chiuso, aprilo
+        // If it was closed, open it
         if(!isOpen){content.classList.add('open');hdr.classList.add('open');}
       });
 
@@ -730,15 +730,15 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   bfs.addEventListener('click',()=>setFullscreen(!fsOn));
 
   // ── Keyboard shortcuts ───────────────────────────────────
-  // Raccoglie tutti i preset in ordine (gruppo aperto prima, poi gli altri)
+  // Collects all presets in order (open group first, then the others)
   function flatPresets(){
     const btns=[];
-    // Prima i preset del gruppo aperto, poi quelli dei gruppi chiusi (per navigazione intuitiva)
+    // Presets of the open group first, then those of the closed groups (intuitive navigation)
     document.querySelectorAll('.pgroup').forEach(g=>{
       const isOpen=g.querySelector('.pgroup-content').classList.contains('open');
       if(isOpen) g.querySelectorAll('.preset-btn').forEach(b=>btns.push(b));
     });
-    // Se nessun gruppo aperto, prendi tutti
+    // If no group is open, take them all
     if(btns.length===0) document.querySelectorAll('.preset-btn').forEach(b=>btns.push(b));
     return btns;
   }
@@ -755,7 +755,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
 
   document.addEventListener('keydown',e=>{
-    // Ignora se il focus è in un input
+    // Ignore if the focus is in an input
     if(e.target.tagName==='INPUT') return;
     switch(e.key){
       case ' ':

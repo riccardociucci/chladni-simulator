@@ -13,7 +13,7 @@ Chladni figures are the geometric patterns that appear when sand on a vibrating 
 | `index.html` | Particle mode — 25,000 sand grains in real time |
 | `chladnisimulator.html` | Full version — particles + vector rendering with SVG export |
 
-The previous version, with an always-square plate, is tagged `v1-originale`.
+The previous version, with an always-square plate, is tagged `v1`.
 
 ---
 

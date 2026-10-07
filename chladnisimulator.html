@@ -79,13 +79,13 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
             <div class="row"><span class="lbl">Height</span><input type="number" id="nch" value="1080" min="100" max="4000" step="1" style="width:56px"></div>
           </div>
         </div>
-        <div class="hint2" style="margin-top:2px;">Pixel, risoluzione reale del canvas.</div>
+        <div class="hint2" style="margin-top:2px;">Pixels: the real canvas resolution.</div>
       </div>
-      <div class="lbl" style="margin-top:6px;margin-bottom:2px;">Adatta</div>
+      <div class="lbl" style="margin-top:6px;margin-bottom:2px;">Adapt</div>
       <div class="ab-row3">
-        <button id="bastr" title="Fisica ricalcolata su W×H: a nodi fissi il pattern risulta stirato">Stretch</button>
-        <button id="badns" class="on" title="Come Stretch ma i nodi sull'asse lungo si scalano per non stirare">Density</button>
-        <button id="bacrp" title="Pattern quadrato congelato, scalato a coprire il formato (ritaglia)">Crop</button>
+        <button id="bastr" title="Physics recomputed on W×H: with fixed node counts the pattern looks stretched">Stretch</button>
+        <button id="badns" class="on" title="Like Stretch, but the nodes on the long axis are scaled so the pattern is not stretched">Density</button>
+        <button id="bacrp" title="Square pattern, scaled to cover the format and cropped">Crop</button>
       </div>
     </div>
 
@@ -110,7 +110,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
             <button id="bfn">None</button>
             <button id="bfb" class="on">Band</button>
             <button id="bfr">Regions</button>
-            <button id="bfc" title="Celle positive e negative come forme chiuse separate, colorabili una per una">Cells</button>
+            <button id="bfc" title="Positive and negative cells as separate closed shapes, each colourable on its own">Cells</button>
           </div>
         </div>
         <div class="ctrl" id="bandctl">
@@ -132,7 +132,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     <div>
       <div class="stitle">Mode 1 — Fourier</div>
       <div class="eq">Base·sin(πmx)sin(πny)<br>+ Mirror·sin(πnx)sin(πmy)</div>
-      <div class="hint2" id="densityhint" style="margin-top:1px;">Su formati non 1:1 conta la modalità Adatta — Density scala i nodi sull'asse lungo, Crop congela il pattern al quadrato e lo ritaglia.</div>
+      <div class="hint2" id="densityhint" style="margin-top:1px;">On non-square formats the Adapt mode matters — Density scales the nodes on the long axis, Crop keeps the square pattern and crops it.</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px;">
         <div class="ctrl">
           <div class="row"><span class="lbl">Nodes X</span><input type="number" id="nfx" value="3" min="1" max="10" step="1"></div>
@@ -261,10 +261,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   ];
 
   // ── Canvas / resize ──────────────────────────────────────
-  // Formato tavola: 'ratio' adatta W,H al riquadro disponibile mantenendo il
-  // rapporto scelto; 'custom' fissa la risoluzione reale del canvas ai pixel
-  // richiesti, mostrata scalata via CSS. PS=min(W,H) è la scala isotropica per
-  // ciò che non ha direzione: hit-radius maniglie, numero d'onda K del Modo 2.
+  // Plate format: 'ratio' fits W,H to the available area keeping the chosen
+  // ratio; 'custom' sets the real canvas resolution to the requested pixels,
+  // displayed scaled via CSS. PS=min(W,H) is the isotropic scale for anything
+  // without a direction: handle hit radius, Mode 2 wave number K.
   const cv=document.getElementById('chl'), cx=cv.getContext('2d');
   const wrap=document.getElementById('canvaswrap');
   let W=0,H=0,PS=100;
@@ -286,8 +286,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     if(nW===W&&nH===H)return;
     const sx=W?nW/W:1,sy=H?nH/H:1;
     W=nW;H=nH;PS=Math.min(W,H);cv.width=W;cv.height=H;
-    // Particelle e sorgenti si riscalano con la tavola invece di ripartire da
-    // zero: ridimensionare la finestra non cancella la figura già formata.
+    // Particles and sources are rescaled with the plate instead of starting
+    // over: resizing the window does not wipe out a pattern already formed.
     if(ppx&&ppx.length===NP){for(let i=0;i<NP;i++){ppx[i]*=sx;ppy[i]*=sy;}}
     else scatter();
     hx2=clampHDim(hx2?hx2*sx:W*0.3,W);hy2=clampHDim(hy2?hy2*sy:H*0.3,H);
@@ -298,27 +298,27 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   const clampHDim=(v,dim)=>Math.max(Math.max(12,dim*0.02),Math.min(dim/2-8,isFinite(v)&&v>0?v:dim*0.3));
 
   // ── Params ───────────────────────────────────────────────
-  let FX1=3,FY1=5,A1=1,B1=1;          // Modo 1: Fourier
+  let FX1=3,FY1=5,A1=1,B1=1;          // Mode 1: Fourier
   let hx2=0,hy2=0,K2=6,handlesOn=false,symMode=true;
-  let srcPos=[[0,0],[0,0],[0,0],[0,0]]; // posizioni indipendenti (usate quando symMode=false)
+  let srcPos=[[0,0],[0,0],[0,0],[0,0]]; // independent positions (used when symMode=false)
   let MIX=0.5;
   let NP=25000,VIB=0.15,PSIZE=0.6,paused=false;
   const FK_BASE=0.5,DAMP_BASE=0.97,FK_BOOST=5.0,DAMP_BOOST=0.80,BOOST_FRAMES=150;
   let boostLeft=0;
   function triggerBoost(){boostLeft=BOOST_FRAMES;}
 
-  // Adattamento sui formati non quadrati (28/09/2026). Tutto vive in
-  // coordinate canvas: cambia solo come (x,y) si mappa nel dominio unitario
-  // (u,v) della formula e con quali frequenze. 'stretch' ricalcola la figura
-  // sul rettangolo a nodi fissi, e risulta stirata; 'density' scala i nodi
-  // dell'asse lungo per tenerne costante la spaziatura; 'crop' è una finestra
-  // centrata sulla figura quadrata di lato max(W,H), cioè l'1:1 ritagliato.
+  // Adapting to non-square formats. Everything lives in canvas coordinates:
+  // only the mapping of (x,y) into the formula's unit domain (u,v) and the
+  // frequencies change. 'stretch' recomputes the pattern on the rectangle
+  // with fixed node counts, so it looks stretched; 'density' scales the nodes
+  // on the long axis to keep their spacing constant; 'crop' is a centred
+  // window onto the square pattern of side max(W,H), the 1:1 figure cropped.
   let ADAPT='density'; // 'stretch' | 'density' | 'crop'
-  // Intero più vicino con la stessa parità di p: la parità dei nodi decide le
-  // simmetrie a specchio della figura, arrotondare liberamente le rompe.
+  // Nearest integer with the same parity as p: node parity decides the mirror
+  // symmetries of the figure, and free rounding would break them.
   function parityRound(v,p){let r=Math.round(v);if(Math.abs(r-p)%2===1)r+=v>r?1:-1;return Math.max(p,Math.min(p%2?59:60,r));}
-  // Frequenze per asse dei due termini: Base = sin(π·ax·u)·sin(π·ay·v),
-  // Mirror = sin(π·bx·u)·sin(π·by·v). A 1:1 ax=by=m e ay=bx=n.
+  // Per-axis frequencies of the two terms: Base = sin(π·ax·u)·sin(π·ay·v),
+  // Mirror = sin(π·bx·u)·sin(π·by·v). At 1:1 ax=by=m and ay=bx=n.
   function geom(){
     const m=FX1,n=FY1;
     if(ADAPT==='crop'){const L=Math.max(W,H);return{ox:(L-W)/2,oy:(L-H)/2,Lx:L,Ly:L,ax:m,ay:n,bx:n,by:m};}
@@ -354,10 +354,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     for(let i=0;i<NP;i++){pvx[i]=(Math.random()-.5)*k;pvy[i]=(Math.random()-.5)*k;}
   }
 
-  // ── Physics: Modo 1 (Fourier) ─────────────────────────────
-  // z = a·sin(π·ax·u)·sin(π·ay·v) + b·sin(π·bx·u)·sin(π·by·v), con
-  // u=(x+ox)/Lx e v=(y+oy)/Ly (vedi geom). Le derivate si dividono per Lx e Ly
-  // separati: su tavola rettangolare le due direzioni hanno scale diverse.
+  // ── Physics: Mode 1 (Fourier) ─────────────────────────────
+  // z = a·sin(π·ax·u)·sin(π·ay·v) + b·sin(π·bx·u)·sin(π·by·v), with
+  // u=(x+ox)/Lx and v=(y+oy)/Ly (see geom). Derivatives are divided by Lx and
+  // Ly separately: on a rectangular plate the two directions have different scales.
   const PI=Math.PI;
   function forceFourier(g,a,b,xi,yi){
     const u=(xi+g.ox)/g.Lx,v=(yi+g.oy)/g.Ly;
@@ -369,7 +369,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return[-2*z*dzdx,-2*z*dzdy];
   }
 
-  // ── Physics: Modo 2 (onde circolari da 4 sorgenti) ────────
+  // ── Physics: Mode 2 (circular waves from 4 sources) ───────
   function forceCircular(K,xi,yi){
     const srcs=getSources();
     let f=0,dfdx=0,dfdy=0;
@@ -386,7 +386,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return[-2*f*dfdx,-2*f*dfdy];
   }
 
-  // ── Campo d'interferenza (offscreen, aggiornato solo al cambio parametri) ──
+  // ── Interference field (offscreen, updated only when parameters change) ────
   let fieldCv=null,fieldCtx2=null,fieldDirty=true,fieldAlpha=0;
   function markFieldDirty(){fieldDirty=true;}
 
@@ -450,10 +450,10 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return -1;
   }
 
-  // ── Vector: campo scalare campionato su griglia ──────────
-  // z(x,y) = w1·Fourier + w2·Sources, normalizzato a max|z| = 1.
-  // Le linee nodali (z=0) sono le figure di Chladni; il fill "band"
-  // è la regione |z| < BANDEPS (l'analogo della sabbia accumulata).
+  // ── Vector: scalar field sampled on a grid ───────────────
+  // z(x,y) = w1·Fourier + w2·Sources, normalised to max|z| = 1.
+  // The nodal lines (z=0) are the Chladni figures; the "band" fill
+  // is the region |z| < BANDEPS (the analogue of accumulated sand).
   function sampleField(Nx,Ny){
     const Z=new Float32Array((Ny+1)*(Nx+1));
     const w2=(handlesOn&&MIX>0)?MIX:0,w1=1-w2;
@@ -474,20 +474,20 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         const a=Math.abs(z);if(a>maxAbs)maxAbs=a;
       }
     }
-    // Le linee nodali diagonali passano esattamente sui vertici della griglia,
-    // dove il calcolo dà ±1e-16 di segno casuale: senza azzerarle la linea esce
-    // a pezzi (verificato il 28/09/2026: 246 tracciati invece di 2 sull'1,3−).
+    // Diagonal nodal lines pass exactly through grid vertices, where the
+    // computation gives ±1e-16 with a random sign: without zeroing them the
+    // line comes out in fragments (246 paths instead of 2 on preset 1,3−).
     const snap=maxAbs*1e-9;
     for(let i=0;i<Z.length;i++)if(Math.abs(Z[i])<snap)Z[i]=0;
     if(maxAbs>1e-12){const inv=1/maxAbs;for(let i=0;i<Z.length;i++)Z[i]*=inv;}
     return Z;
   }
 
-  // ── Vector: marching squares (livello 0 di val) ──────────
-  // Ogni punto porta in .e l'id del lato di griglia su cui cade: le due celle
-  // che condividono un lato generano lo stesso id, e chainSegs ricuce per
-  // topologia. Ricucire per coordinate arrotondate fondeva punti distinti a
-  // 0,01 px e spezzava i contorni.
+  // ── Vector: marching squares (level 0 of val) ────────────
+  // Every point carries in .e the id of the grid edge it lies on: the two
+  // cells sharing an edge produce the same id, and chainSegs stitches by
+  // topology. Stitching by rounded coordinates merged distinct points
+  // 0.01 px apart and broke the contours.
   function marchSquares(val,Nx,Ny,stepX,stepY){
     const segs=[],HOFF=(Ny+1)*Nx;
     const lp=(v0,v1,a0,a1)=>a0+v0/(v0-v1)*(a1-a0);
@@ -503,9 +503,9 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
         if((tl>0)!==(bl>0))pts.push(P(x0,lp(tl,bl,y0,y1),HOFF+j*(Nx+1)+i));
         if(pts.length===2)segs.push([pts[0],pts[1]]);
         else if(pts.length===4){
-          // Sella: decide il segno del punto di sella dell'interpolante
-          // bilineare, a parità le regioni positive restano separate. Niente
-          // incrocio a X: le forme a "8" sono tracciati degeneri in Illustrator.
+          // Saddle: decided by the sign of the saddle point of the bilinear
+          // interpolant; on a tie the positive regions stay apart. No X
+          // crossing: "figure 8" shapes are degenerate paths in Illustrator.
           const D=tl-tr-bl+br;
           const s=Math.abs(D)>1e-12?(tl*br-tr*bl)/D:(tl+tr+bl+br)*0.25;
           if((s>0)===(tl>0)){segs.push([pts[0],pts[1]]);segs.push([pts[3],pts[2]]);}
@@ -516,7 +516,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return segs;
   }
 
-  // ── Vector: concatena i segmenti in polilinee continue ───
+  // ── Vector: chain the segments into continuous polylines ──
   function chainSegs(segs){
     const key=p=>p.e;
     const map=new Map();
@@ -559,7 +559,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return chains;
   }
 
-  // ── Vector: semplificazione Ramer-Douglas-Peucker ────────
+  // ── Vector: Ramer-Douglas-Peucker simplification ─────────
   function rdp(pts,eps){
     if(pts.length<3)return pts;
     const keep=new Uint8Array(pts.length);keep[0]=keep[pts.length-1]=1;
@@ -604,22 +604,22 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   }
 
   function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t;}return a||1;}
-  // Risoluzione dispari e coprima con le frequenze dell'asse: la griglia non
-  // cade sulle linee nodali dritte, che darebbero incroci smussati.
+  // Odd resolution, coprime with the axis frequencies: the grid never falls
+  // on straight nodal lines, which would produce blunted crossings.
   function fixN(t,freq){t=Math.round(t);if(t%2===0)t++;let g=0;while(gcd(t,freq)!==1&&g<60){t+=2;g++;}return t;}
   function autoResBase(){
     const g=geom(),f=Math.max(g.ax,g.ay,g.bx,g.by,1);
     return Math.max(220,Math.min(560,Math.round(44*f)));
   }
-  // Nx,Ny da una cella comune rapportata al lato lungo (celle circa quadrate).
-  // Su tavola quadrata Nx=Ny: due griglie diverse rompono la simmetria diagonale.
+  // Nx,Ny from a common cell size scaled to the long side (roughly square cells).
+  // On a square plate Nx=Ny: two different grids break the diagonal symmetry.
   function gridDims(baseRes){
     const cell=Math.max(W,H)/baseRes,g=geom();
     if(W===H){const n=fixN(Math.max(20,Math.round(W/cell)),g.ax*g.ay*g.bx*g.by);return[n,n];}
     return[fixN(Math.max(20,Math.round(W/cell)),g.ax*g.bx),fixN(Math.max(20,Math.round(H/cell)),g.ay*g.by)];
   }
 
-  // ── Vector: polilinea → path SVG (lineare o Bézier Catmull-Rom) ──
+  // ── Vector: polyline → SVG path (linear or Catmull-Rom Bézier) ───
   function chainToPath(c,scale,smooth){
     const pts=c.pts,n=pts.length;
     const f=v=>(v*scale).toFixed(2);
@@ -630,8 +630,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
       return d;
     }
     const P=c.closed?(i=>pts[((i%n)+n)%n]):(i=>pts[Math.max(0,Math.min(n-1,i))]);
-    // Tangenti Catmull-Rom con clamp: dopo l'RDP i punti non sono equidistanti
-    // e ai vertici di tratti lunghi i controlli liberi sparerebbero fuori figura
+    // Clamped Catmull-Rom tangents: after RDP the points are not evenly spaced,
+    // and at the vertices of long segments free controls would overshoot the figure
     const ctrl=(px,py,ox,oy,maxLen)=>{
       const l=Math.hypot(ox,oy);
       const s=l>maxLen&&l>0?maxLen/l:1;
@@ -650,18 +650,18 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return d;
   }
 
-  // ── Vector: ricalcolo completo ───────────────────────────
+  // ── Vector: full recompute ───────────────────────────────
   function buildVectors(baseRes){
     const[Nx,Ny]=gridDims(baseRes);
     const stepX=W/Nx,stepY=H/Ny,Z=sampleField(Nx,Ny);
     const at=(j,i)=>Z[j*(Nx+1)+i];
     const border=(j,i)=>i===0||j===0||i===Nx||j===Ny;
-    // Bordo forzato negativo → tutti i contorni si chiudono nel dominio;
-    // gli zeri esatti prendono un segno fisso, sempre lo stesso
+    // Border forced negative → every contour closes inside the domain;
+    // exact zeros take a fixed sign, always the same
     const bandVal=(j,i)=>{if(border(j,i))return -1e-4;const v=BANDEPS-Math.abs(at(j,i));return v===0?1e-9:v;};
     const regionVal=(j,i)=>{if(border(j,i))return -1e-4;const v=at(j,i);return v===0?-1e-9:v;};
     const tol=Math.max(0.08,Math.min(0.6,Math.min(stepX,stepY)*0.12));
-    // Celle negative: stesso contorno a segno invertito, zeri esclusi da entrambe
+    // Negative cells: same contour with the sign inverted, zeros excluded from both
     const negVal=(j,i)=>{if(border(j,i))return -1e-4;const v=-at(j,i);return v===0?-1e-9:v;};
     const regions=()=>chainSegs(marchSquares(regionVal,Nx,Ny,stepX,stepY));
     let fill=[],fillNeg=[];
@@ -670,16 +670,16 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     else if(FILLMODE==='cells'){fill=regions();fillNeg=chainSegs(marchSquares(negVal,Nx,Ny,stepX,stepY));}
     fill.forEach(c=>simplifyChain(c,tol));
     fillNeg.forEach(c=>simplifyChain(c,tol));
-    // Outline = contorni chiusi delle celle positive: ogni linea nodale interna
-    // separa una cella positiva da una negativa, quindi compare una volta sola,
-    // e dove una cella tocca il bordo il contorno corre lungo la cornice.
+    // Outline = closed contours of the positive cells: every interior nodal line
+    // separates a positive cell from a negative one, so it appears only once,
+    // and where a cell touches the border the contour runs along the frame.
     const outline=OUTLINE?regions():[];
     outline.forEach(c=>simplifyChain(c,tol));
     return{fill,fillNeg,outline};
   }
-  // Raggruppa i contorni chiusi in celle: ogni contorno esterno con i propri
-  // fori (profondità di annidamento pari = esterno, dispari = foro), così in
-  // export ogni cella, anche ad anello, è un solo oggetto.
+  // Group the closed contours into cells: each outer contour with its own
+  // holes (even nesting depth = outer, odd = hole), so on export every cell,
+  // ring-shaped ones included, is a single object.
   function groupCells(chains){
     const area=c=>{let a=0;const p=c.pts;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return Math.abs(a/2);};
     const inside=(pt,poly)=>{let r=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a[1]>pt[1])!==(b[1]>pt[1])&&pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0])r=!r;}return r;};
@@ -690,7 +690,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return chains.map((c,i)=>i).filter(i=>D[i]%2===0).map(i=>[chains[i],...chains.filter((_,k)=>parent[k]===i&&D[k]%2===1)]);
   }
   function computeVectors(){
-    // Durante il drag delle sorgenti usa metà risoluzione per fluidità
+    // While the sources are dragged, use half resolution for smoothness
     const v=buildVectors(drag>=0?Math.max(121,autoResBase()/2):autoResBase());
     const path=chains=>{const d=chains.map(c=>chainToPath(c,1,SMOOTH)).join('');return d?new Path2D(d):null;};
     vecFillPath=path(v.fill);
@@ -734,8 +734,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     for(let i=0;i<NP;i++){cx.beginPath();cx.arc(ppx[i],ppy[i],pr[i]*PSIZE,0,6.2832);cx.fill();}
   }
 
-  // Colore del tratto vettoriale (linee nodali + frame del bordo): in Cells le
-  // celle sono chiare e viola, quindi il tratto è scuro per separarle
+  // Colour of the vector stroke (nodal lines + border frame): in Cells the
+  // cells are light and violet, so the stroke is dark to separate them
   function outlineColor(){return FILLMODE==='band'?'#7F77DD':FILLMODE==='cells'?'#0c0c16':'#EBEEFF';}
   function outlineStroke(){return FILLMODE==='band'?'rgba(127,119,221,.95)':FILLMODE==='cells'?'rgba(12,12,22,.95)':'rgba(235,238,255,.92)';}
 
@@ -754,7 +754,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
       cx.lineWidth=STROKEW;cx.lineJoin='round';cx.lineCap='round';
       for(const p of vecOutlinePaths)cx.stroke(p);
     }
-    // Frame del bordo: rettangolo chiuso che racchiude la figura.
+    // Border frame: a closed rectangle enclosing the figure.
     cx.strokeStyle=outlineStroke();
     cx.lineWidth=STROKEW;cx.lineJoin='miter';cx.lineCap='butt';
     const ins=STROKEW/2;
@@ -770,7 +770,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     requestAnimationFrame(loop);
   }
 
-  // ── Pointer (solo handle drag, nessuna interazione particelle) ───────────
+  // ── Pointer (handle drag only, no particle interaction) ──────────────────
   function getXY(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*(W/r.width),(e.clientY-r.top)*(H/r.height)];}
   function getTXY(e){const r=cv.getBoundingClientRect(),t=e.touches[0];return[(t.clientX-r.left)*(W/r.width),(t.clientY-r.top)*(H/r.height)];}
   function doDrag(i,rx,ry){
@@ -818,7 +818,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     nb.addEventListener('keydown',e=>{if(e.key==='Enter')apply(+nb.value);});
   })();
 
-  // ── Format tavola ─────────────────────────────────────────
+  // ── Plate format ──────────────────────────────────────────
   const bf11=document.getElementById('bf11'),bf45=document.getElementById('bf45'),
         bf916=document.getElementById('bf916'),bfcu=document.getElementById('bfcu'),
         customfmt=document.getElementById('customfmt'),
@@ -954,8 +954,8 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
   bpa.addEventListener('click',()=>{paused=!paused;bpa.textContent=paused?'▶ Resume':'⏸ Pause';bpa.classList.toggle('on',paused);});
 
   // ── Export SVG ───────────────────────────────────────────
-  // Lato lungo esportato a 1200px, l'altro proporzionale: stessa scala su
-  // entrambi gli assi, altrimenti la figura uscirebbe deformata.
+  // Long side exported at 1200px, the other proportional: the same scale on
+  // both axes, otherwise the figure would come out distorted.
   function exportSize(){
     const scale=1200/Math.max(W,H);
     return[Math.round(W*scale),Math.round(H*scale),scale];
@@ -973,18 +973,18 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
     return parts.join('');
   }
 
-  // Gruppi separati (background / fill / outline) → layer distinti in Illustrator.
-  // Il fill è un'unica path con fill-rule evenodd: i contorni annidati diventano fori.
-  // I vettori si ricalcolano a circa 1 px d'export per cella, non alla griglia
-  // dello schermo (~5 px): incroci netti e nessuna forma sottile persa.
+  // Separate groups (background / fill / outline) → distinct layers in Illustrator.
+  // The fill is a single path with fill-rule evenodd: nested contours become holes.
+  // Vectors are recomputed at about 1 export px per cell, not at the screen
+  // grid (~5 px): clean crossings and no thin shapes lost.
   function exportVectorSVG(){
     const v=buildVectors(Math.max(autoResBase(),1200));
     const[outW,outH,scale]=exportSize();
     const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}" viewBox="0 0 ${outW} ${outH}">`,
       `<g id="background"><rect width="${outW}" height="${outH}" fill="#0c0c16"/></g>`];
     if(FILLMODE==='cells'){
-      // Una <path> per cella (contorno esterno + fori): ogni cella si seleziona
-      // e si colora da sola in Illustrator
+      // One <path> per cell (outer contour + holes): each cell can be selected
+      // and coloured on its own in Illustrator
       for(const[id,chains,color]of[['cells-positive',v.fill,'#EBEEFF'],['cells-negative',v.fillNeg,'#7F77DD']]){
         parts.push(`<g id="${id}" fill="${color}" fill-rule="evenodd" stroke="none">`);
         for(const cell of groupCells(chains))parts.push(`<path d="${cell.map(c=>chainToPath(c,scale,SMOOTH)).join('')}"/>`);
@@ -1000,7 +1000,7 @@ button.on-g{border-color:#1D9E75;color:#5dcaa5;background:#0d2018;}
       for(const c of v.outline)parts.push(`<path d="${chainToPath(c,scale,SMOOTH)}"/>`);
       parts.push('</g>');
     }
-    // Frame del bordo come rettangolo chiuso → forma chiusa editabile in Illustrator
+    // Border frame as a closed rectangle → an editable closed shape in Illustrator
     const bsw=STROKEW*scale,bins=bsw/2;
     parts.push(`<g id="border"><rect x="${bins.toFixed(2)}" y="${bins.toFixed(2)}" width="${(outW-bsw).toFixed(2)}" height="${(outH-bsw).toFixed(2)}" fill="none" stroke="${outlineColor()}" stroke-width="${bsw.toFixed(2)}"/></g>`);
     parts.push('</svg>');
