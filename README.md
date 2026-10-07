@@ -10,8 +10,10 @@ Chladni figures are the geometric patterns that appear when sand on a vibrating 
 
 | File | Description |
 |------|-------------|
-| `index.html` | Particle mode — 25,000 sand grains in real time |
-| `chladnisimulator.html` | Full version — particles + vector rendering with SVG export |
+| `index.html` | Particle mode — 25,000 sand grains in real time, with a link that carries the figure to the full version |
+| `chladnisimulator.html` | Full version — particles + vector rendering with SVG export; opens in Vector view |
+
+Both pages work on phones: below 768 px the plate sits on top at full width and the controls scroll underneath.
 
 The previous version, with an always-square plate, is tagged `v1`.
 
@@ -97,10 +99,14 @@ Colours: the figure uses the Vibly palette — Black Dog `#1A1A1A` background, S
 | F     | Fullscreen                          |
 | ← →   | Navigate presets                    |
 | Esc   | Exit fullscreen                     |
+| ⌘Z / Ctrl+Z | Undo                          |
+| ⇧⌘Z / Ctrl+Y | Redo                         |
 
 ### Reproducible figures
 
 Every parameter that shapes the figure lives in the page address: the link reopens the same figure, and **Copy link** puts it on the clipboard. Exported files are named after their parameters (for example `chladni_m4n4_a1.00_b-1.00_9x16_density_band0.12.svg`), and each SVG carries the full parameter set and that link in its `<metadata>`. Particle positions are random, so a particle export matches the figure, not the exact grains.
+
+**Undo** and **Redo** step through settled states (a whole slider drag is one step), and **Restore defaults** is undoable too. On non-square plates in Density or Crop mode, a line under the node sliders shows the node counts actually drawn, and the preset thumbnails take the plate's proportions.
 
 ### Presets
 

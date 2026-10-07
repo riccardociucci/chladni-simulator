@@ -32,11 +32,12 @@ button,input{font:inherit;color:inherit;}
 ::selection{background:var(--violet);color:var(--text);}
 :focus{outline:none;}
 :focus-visible{outline:2px solid var(--violet-400);outline-offset:2px;}
-#app{display:flex;height:100vh;}
-#sidebar{width:248px;min-width:180px;max-width:480px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line);}
+#app{display:flex;height:100vh;height:100dvh;}
+#sidebar{width:248px;min-width:180px;max-width:480px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);}
 #sb-scroll{flex:1;min-height:0;overflow-y:auto;padding:16px 12px 18px;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin;scrollbar-color:var(--line-hi) transparent;}
 #sb-actions{flex-shrink:0;padding:10px 12px 8px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;}
-#rh{width:5px;flex-shrink:0;cursor:col-resize;background:transparent;transition:background .15s;z-index:10;}
+/* Resize handle: a hairline with a grip in the middle, always visible */
+#rh{width:5px;flex-shrink:0;cursor:col-resize;z-index:10;transition:background .15s;background:linear-gradient(var(--line-hi),var(--line-hi)) center/3px 28px no-repeat,linear-gradient(90deg,transparent 2px,var(--line) 2px,var(--line) 3px,transparent 3px);}
 #rh:hover,#rh.rh-drag{background:rgba(151,102,236,.4);}
 #canvaswrap{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;min-width:0;background:var(--bg);}
 canvas{display:block;cursor:crosshair;border-radius:4px;}
@@ -62,7 +63,11 @@ button.on{border-color:var(--violet-500);color:var(--violet-200);background:var(
 .sep{border:none;border-top:1px solid var(--line);}
 .eq{font-size:12px;color:var(--muted);line-height:1.5;font-style:italic;margin-bottom:8px;}
 .hint2{font-size:12px;color:var(--muted);line-height:1.45;margin-top:6px;}
-.off{opacity:.35;transition:opacity .2s;}
+[hidden]{display:none!important;}
+button:disabled{opacity:.4;cursor:default;}
+button:disabled:hover{background:var(--surface);color:var(--text-2);}
+a{color:var(--violet-400);text-underline-offset:2px;}
+a:hover{color:var(--violet-200);}
 /* On/off switches: the track says the state, the label says what it controls */
 button.sw{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 button.sw::after{content:"";flex-shrink:0;width:26px;height:14px;border-radius:7px;background:var(--line-hi) radial-gradient(circle at 7px 50%,var(--label) 4px,transparent 4.5px);transition:background .15s;}
@@ -81,7 +86,10 @@ button.sw.on::after{background:var(--violet) radial-gradient(circle at 19px 50%,
 .presets{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 6px;}
 .presets button{width:auto;padding:4px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;line-height:1;font-variant-numeric:tabular-nums;}
 .presets button.anti{color:var(--violet-400);}
-.thumb{width:44px;height:44px;flex-shrink:0;border-radius:3px;overflow:hidden;line-height:0;}
+.thumb{width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:0;}
+.thumb svg{border-radius:3px;}
+/* A closed group that holds the current preset carries a violet dot */
+.pgroup-header.has-on>span::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--violet-400);margin-left:7px;vertical-align:1px;}
 .legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin:-4px 0 6px;}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;}
 /* Actions */
@@ -97,6 +105,17 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
 #app.fullscreen #sidebar,#app.fullscreen #rh{display:none;}
 #app.fullscreen #canvaswrap{padding:0;}
 #app.fullscreen canvas{border-radius:0;}
+/* Phones: the plate on top at full width, the controls below */
+@media (max-width:767px){
+  #app{flex-direction:column;}
+  #canvaswrap{order:-1;flex:0 0 auto;height:56vh;height:56dvh;}
+  #sidebar{width:auto!important;min-width:0;max-width:none;flex:1;min-height:0;border-top:1px solid var(--line);}
+  #rh{display:none;}
+  button{min-height:40px;}
+  .presets button{min-height:0;}
+  .pgroup-header{min-height:40px;}
+  input[type=number]{font-size:16px;min-height:32px;width:68px;}
+}
 </style>
 </head>
 <body>
@@ -114,7 +133,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
           <button id="bf916" data-toggle>9:16</button>
           <button id="bfcu" data-toggle>Custom</button>
         </div>
-        <div class="ctrl off" id="customfmt" inert style="margin-top:6px;">
+        <div class="ctrl" id="customfmt" hidden inert style="margin-top:6px;">
           <div class="ab-row">
             <div class="row"><label class="lbl" for="ncw">Width</label><input type="number" id="ncw" value="1080" min="100" max="4000" step="1"></div>
             <div class="row"><label class="lbl" for="nch">Height</label><input type="number" id="nch" value="1080" min="100" max="4000" step="1"></div>
@@ -142,7 +161,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
       </section>
 
       <!-- VECTOR PARAMS -->
-      <section id="vparams" class="off" inert aria-labelledby="t-vector">
+      <section id="vparams" hidden inert aria-labelledby="t-vector">
         <h2 class="stitle" id="t-vector">Vector</h2>
         <div class="stack">
           <div>
@@ -159,7 +178,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
             <input type="range" id="sbe" min="0.02" max="0.40" value="0.12" step="0.01">
           </div>
           <button id="bol" class="sw" data-toggle>Outline</button>
-          <div class="ctrl off" id="strokectl" inert>
+          <div class="ctrl" id="strokectl" hidden inert>
             <div class="row"><label class="lbl" for="nsw">Stroke width</label><input type="number" id="nsw" value="1.0" min="0.3" max="4.0" step="0.1"></div>
             <input type="range" id="ssw" min="0.3" max="4.0" value="1.0" step="0.1">
           </div>
@@ -182,6 +201,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
             <div class="row"><label class="lbl" for="nfy">Nodes Y</label><input type="number" id="nfy" value="5" min="1" max="10" step="1"></div>
             <input type="range" id="sfy" min="1" max="10" value="5" step="1">
           </div>
+          <p class="hint2" id="effnodes" hidden style="margin-top:0;"></p>
           <div class="ab-row" style="gap:8px;">
             <div class="ctrl">
               <div class="row"><label class="lbl" for="na1">Base</label><input type="number" id="na1" value="1.00" min="-2" max="2" step="0.05" style="width:48px"></div>
@@ -208,7 +228,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
         <div class="stack">
           <div style="display:flex;gap:4px;align-items:stretch;">
             <button id="btnh" class="sw" data-toggle style="flex:1;">Wave sources</button>
-            <button id="btsym" class="off" inert data-toggle aria-label="Symmetric sources" title="Symmetric sources: drag one, the other three mirror it">
+            <button id="btsym" hidden inert data-toggle aria-label="Symmetric sources" title="Symmetric sources: drag one, the other three mirror it">
               <svg id="lock-icon" width="13" height="15" viewBox="0 0 13 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="1.5" y="7" width="10" height="7" rx="1.5" fill="currentColor" stroke="none" opacity=".75"/>
                 <path id="lock-shackle" d="M3.5 7V5.5a3 3 0 016 0V7"/>
@@ -216,7 +236,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
             </button>
           </div>
           <p class="hint2" style="margin-top:0;">Four circular wave sources you drag on the plate. Particles gather along their interference nodes.</p>
-          <div id="m2-params" class="stack off" inert>
+          <div id="m2-params" class="stack" hidden inert>
             <div class="ctrl">
               <div class="row"><label class="lbl" for="nk2">Rings k</label><input type="number" id="nk2" value="6" min="1" max="30" step="0.5"></div>
               <input type="range" id="sk2" min="1" max="30" value="6" step="0.5">
@@ -256,6 +276,14 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
 
       <hr class="sep">
 
+      <div class="stack">
+        <div class="ab-row">
+          <button id="bundo" class="btn-icon" disabled><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5l-3 3 3 3M2.5 6.5H10a3.5 3.5 0 0 1 0 7H8"/></svg>Undo</button>
+          <button id="bredo" class="btn-icon" disabled><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 3.5l3 3-3 3M13.5 6.5H6a3.5 3.5 0 0 0 0 7h2"/></svg>Redo</button>
+        </div>
+        <button id="bdef" class="btn-icon">Restore defaults</button>
+      </div>
+
       <p class="kbhint">
         <span><kbd>V</kbd> view</span>
         <span><kbd>Space</kbd> pause</span>
@@ -263,6 +291,8 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
         <span><kbd>S</kbd> export</span>
         <span><kbd>←</kbd> <kbd>→</kbd> presets</span>
         <span><kbd>F</kbd> fullscreen</span>
+        <span><kbd class="mod">⌘</kbd> <kbd>Z</kbd> undo</span>
+        <span><kbd>⇧</kbd> <kbd class="mod">⌘</kbd> <kbd>Z</kbd> redo</span>
       </p>
     </div>
 
@@ -286,9 +316,9 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
 
   // Figure colours, from the Vibly palette: Black Dog, Snow White, Purple Haze.
   const COL={bg:'#1A1A1A',light:'#FAFAFA',violet:'#642BAC'};
-  // A control that does not apply right now is dimmed and made inert, so it
+  // A control that does not apply right now is hidden and made inert, so it
   // also leaves the tab order and the accessibility tree.
-  function setOff(el,off){el.classList.toggle('off',off);el.inert=off;}
+  function setOff(el,off){el.hidden=off;el.inert=off;}
 
   const GROUPS = [
     { title: 'Base', presets: [
@@ -331,6 +361,9 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
       const r=FORMAT.rw/FORMAT.rh;
       w=availW;h=w/r;
       if(h>availH){h=availH;w=h*r;}
+      // Small screens keep a real working resolution: the long side is never
+      // below 720 px, and the canvas is displayed scaled down.
+      const k=Math.max(1,720/Math.max(w,h));w*=k;h*=k;
     }
     const nW=Math.max(40,Math.floor(w)),nH=Math.max(40,Math.floor(h));
     const disp=Math.min(availW/nW,availH/nH);
@@ -371,12 +404,11 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   function parityRound(v,p){let r=Math.round(v);if(Math.abs(r-p)%2===1)r+=v>r?1:-1;return Math.max(p,Math.min(p%2?59:60,r));}
   // Per-axis frequencies of the two terms: Base = sin(π·ax·u)·sin(π·ay·v),
   // Mirror = sin(π·bx·u)·sin(π·by·v). At 1:1 ax=by=m and ay=bx=n.
-  function geom(){
-    const m=FX1,n=FY1;
-    if(ADAPT==='crop'){const L=Math.max(W,H);return{ox:(L-W)/2,oy:(L-H)/2,Lx:L,Ly:L,ax:m,ay:n,bx:n,by:m};}
-    if(ADAPT==='density'){const rx=W/PS,ry=H/PS;
-      return{ox:0,oy:0,Lx:W,Ly:H,ax:parityRound(m*rx,m),ay:parityRound(n*ry,n),bx:parityRound(n*rx,n),by:parityRound(m*ry,m)};}
-    return{ox:0,oy:0,Lx:W,Ly:H,ax:m,ay:n,bx:n,by:m};
+  function geom(m=FX1,n=FY1,w=W,h=H){
+    if(ADAPT==='crop'){const L=Math.max(w,h);return{ox:(L-w)/2,oy:(L-h)/2,Lx:L,Ly:L,ax:m,ay:n,bx:n,by:m};}
+    if(ADAPT==='density'){const ps=Math.min(w,h),rx=w/ps,ry=h/ps;
+      return{ox:0,oy:0,Lx:w,Ly:h,ax:parityRound(m*rx,m),ay:parityRound(n*ry,n),bx:parityRound(n*rx,n),by:parityRound(m*ry,m)};}
+    return{ox:0,oy:0,Lx:w,Ly:h,ax:m,ay:n,bx:n,by:m};
   }
 
   // ── Vector params ────────────────────────────────────────
@@ -815,6 +847,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   }
 
   function loop(){
+    refreshThumbs();updateEffective();
     if(!paused){
       if(viewMode==='particles'){step();draw();}
       else{if(vectorDirty)computeVectors();drawVector();}
@@ -1096,15 +1129,61 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
         if(isFinite(x)&&isFinite(y))srcPos[i]=[Math.max(2,Math.min(W-2,x*W)),Math.max(2,Math.min(H-2,y*H))];
       });
     }
-    num('np',set.np);num('size',set.size);num('vib',set.vib);
+    num('np',v=>{if(Math.round(v)!==NP)set.np(v);});num('size',set.size);num('vib',set.vib);
     if(q.get('view')==='vector'||q.get('view')==='particles')setView(q.get('view'));
     upB();markFieldDirty();markVectorDirty();
   }
   let lastQuery='';
+  const fullLink=document.getElementById('fulllink');
+  // ── Undo / redo ──────────────────────────────────────────
+  // The history is made of settled states, unchanged for 600 ms, so one
+  // slider drag is one step.
+  const undoStack=[],redoStack=[];
+  let committed='',pendingQ='',pendingSince=0;
+  const bundo=document.getElementById('bundo'),bredo=document.getElementById('bredo');
+  const MODLBL=/Mac|iPhone|iPad/.test(navigator.platform)?'⌘':'Ctrl+';
   function syncHash(){
     const q=stateQuery();
-    if(q!==lastQuery){lastQuery=q;history.replaceState(null,'','#'+q);}
+    if(q!==lastQuery){
+      lastQuery=q;history.replaceState(null,'','#'+q);
+      if(fullLink)fullLink.href='chladnisimulator.html#'+q;
+    }
+    if(!committed)committed=q;
+    else if(q===committed)pendingQ='';
+    else if(q!==pendingQ){pendingQ=q;pendingSince=Date.now();}
+    else if(Date.now()-pendingSince>=600)commit(q);
+    bundo.disabled=!undoStack.length&&q===committed;
+    bredo.disabled=!redoStack.length;
   }
+  function commit(q){
+    undoStack.push(committed);if(undoStack.length>200)undoStack.shift();
+    redoStack.length=0;committed=q;pendingQ='';
+  }
+  function goTo(q){
+    applyState(new URLSearchParams(q));
+    committed=stateQuery();pendingQ='';syncHash();
+  }
+  function undo(){
+    const q=stateQuery();
+    if(q!==committed)commit(q);
+    if(!undoStack.length){say('Nothing to undo');return;}
+    redoStack.push(committed);goTo(undoStack.pop());say('Undone');
+  }
+  function redo(){
+    if(stateQuery()!==committed||!redoStack.length){say('Nothing to redo');return;}
+    undoStack.push(committed);goTo(redoStack.pop());say('Redone');
+  }
+  function restoreDefaults(){
+    const q=stateQuery();
+    if(q===DEFAULT_Q){say('Already at the defaults');return;}
+    if(q!==committed)commit(q);
+    undoStack.push(committed);redoStack.length=0;
+    goTo(DEFAULT_Q);
+    say(`Defaults restored. ${MODLBL}Z brings your figure back`);
+  }
+  bundo.addEventListener('click',undo);
+  bredo.addEventListener('click',redo);
+  document.getElementById('bdef').addEventListener('click',restoreDefaults);
 
   // File name with the parameters that tell two exports apart.
   function fileName(){
@@ -1164,27 +1243,79 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
       const m=+btn.dataset.m,n=+btn.dataset.n,a=+btn.dataset.a,b=+btn.dataset.b;
       btn.classList.toggle('on',m===FX1&&n===FY1&&Math.abs(a-A1)<.04&&Math.abs(b-B1)<.04);
     });
+    document.querySelectorAll('.pgroup').forEach(g=>{
+      const has=!!g.querySelector('.preset-btn.on'),hdr=g.querySelector('.pgroup-header');
+      hdr.classList.toggle('has-on',has);hdr.title=has?'Holds the current preset':'';
+    });
+  }
+  // Thumbnails follow the plate: same proportions and the same Adapt mode.
+  function thumbSize(){
+    const r=W&&H?W/H:1,sz=44;
+    return r>=1?[sz,Math.max(12,Math.round(sz/r))]:[Math.max(12,Math.round(sz*r)),sz];
+  }
+  let thumbKey='';
+  function refreshThumbs(){
+    const key=(W&&H?(W/H).toFixed(3):'1')+ADAPT;
+    if(key===thumbKey)return;
+    thumbKey=key;
+    document.querySelectorAll('.preset-btn').forEach(btn=>{
+      btn.querySelector('.thumb').replaceWith(generateThumb(+btn.dataset.m,+btn.dataset.n,+btn.dataset.a,+btn.dataset.b));
+    });
   }
   function generateThumb(m,n,a,b){
-    const sz=44,cells=48,step=sz/cells;
+    const[tw,th]=thumbSize(),nx=Math.round(48*tw/44),ny=Math.round(48*th/44);
+    const sx=tw/nx,sy=th/ny,g=geom(m,n,tw,th);
+    // z grid — epsilon breaks exact zeros at the corners (avoids degenerate cases)
     const Z=[];
-    for(let j=0;j<=cells;j++){
-      Z[j]=new Float32Array(cells+1);
-      for(let i=0;i<=cells;i++){
-        const x=i/cells,y=j/cells;
-        const v=a*Math.sin(PI*m*x)*Math.sin(PI*n*y)+b*Math.sin(PI*n*x)*Math.sin(PI*m*y);
-        Z[j][i]=v===0?1e-9:v;
+    for(let j=0;j<=ny;j++){
+      Z[j]=new Float32Array(nx+1);
+      for(let i=0;i<=nx;i++){
+        const u=(i*sx+g.ox)/g.Lx,v=(j*sy+g.oy)/g.Ly;
+        const z=a*Math.sin(PI*g.ax*u)*Math.sin(PI*g.ay*v)+b*Math.sin(PI*g.bx*u)*Math.sin(PI*g.by*v);
+        Z[j][i]=z===0?1e-9:z;
       }
     }
-    const segs=marchSquares((j,i)=>Z[j][i],cells,cells,step,step);
+    function lp(v0,v1,a0,a1){return a0+v0/(v0-v1)*(a1-a0);}
     const f=v=>v.toFixed(2),ink=b<0?'#B192F3':'#FAFAFA';
     let d='';
-    for(const s of segs)d+=`M${f(s[0][0])},${f(s[0][1])}L${f(s[1][0])},${f(s[1][1])}`;
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><rect width="${sz}" height="${sz}" fill="#141414"/><rect x=".75" y=".75" width="${sz-1.5}" height="${sz-1.5}" fill="none" stroke="${ink}" stroke-width=".7" opacity=".7"/><path d="${d}" fill="none" stroke="${ink}" stroke-width=".95" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    for(let j=0;j<ny;j++){
+      for(let i=0;i<nx;i++){
+        const tl=Z[j][i],tr=Z[j][i+1],bl=Z[j+1][i],br=Z[j+1][i+1];
+        const x0=i*sx,y0=j*sy,x1=x0+sx,y1=y0+sy;
+        const pts=[];
+        if((tl>0)!==(tr>0)) pts.push([lp(tl,tr,x0,x1),y0]);  // top
+        if((tr>0)!==(br>0)) pts.push([x1,lp(tr,br,y0,y1)]);   // right
+        if((bl>0)!==(br>0)) pts.push([lp(bl,br,x0,x1),y1]);   // bottom
+        if((tl>0)!==(bl>0)) pts.push([x0,lp(tl,bl,y0,y1)]);   // left
+        if(pts.length===2){
+          d+=`M${f(pts[0][0])},${f(pts[0][1])}L${f(pts[1][0])},${f(pts[1][1])}`;
+        } else if(pts.length===4){
+          // Saddle case: the sign of the centre decides which diagonal to use.
+          const cz=(tl+tr+bl+br)*0.25;
+          if((cz>0)===(tl>0)){
+            d+=`M${f(pts[0][0])},${f(pts[0][1])}L${f(pts[1][0])},${f(pts[1][1])}`;
+            d+=`M${f(pts[3][0])},${f(pts[3][1])}L${f(pts[2][0])},${f(pts[2][1])}`;
+          } else {
+            d+=`M${f(pts[0][0])},${f(pts[0][1])}L${f(pts[3][0])},${f(pts[3][1])}`;
+            d+=`M${f(pts[1][0])},${f(pts[1][1])}L${f(pts[2][0])},${f(pts[2][1])}`;
+          }
+        }
+      }
+    }
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${tw}" height="${th}" viewBox="0 0 ${tw} ${th}"><rect width="${tw}" height="${th}" fill="#141414"/><rect x=".75" y=".75" width="${tw-1.5}" height="${th-1.5}" fill="none" stroke="${ink}" stroke-width=".7" opacity=".7"/><path d="${d}" fill="none" stroke="${ink}" stroke-width=".95" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const wrap=document.createElement('div');
     wrap.className='thumb';wrap.setAttribute('aria-hidden','true');
     wrap.innerHTML=svg;
     return wrap;
+  }
+  // On non-square plates the node counts actually drawn differ from Nodes X/Y.
+  const effEl=document.getElementById('effnodes');
+  let effTxt=null;
+  function updateEffective(){
+    let s='';
+    if(W&&H&&W!==H&&ADAPT==='density'){const g=geom();s=`Nodes on this plate, X × Y: Base ${g.ax} × ${g.ay}, Mirror ${g.bx} × ${g.by}`;}
+    else if(W&&H&&W!==H&&ADAPT==='crop')s=`Cropped from the square ${FX1} × ${FY1} pattern`;
+    if(s!==effTxt){effTxt=s;effEl.textContent=s;effEl.hidden=!s;}
   }
 
   function buildPresets(){
@@ -1291,7 +1422,12 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   }
 
   document.addEventListener('keydown',e=>{
-    const t=e.target;
+    const t=e.target instanceof Element?e.target:document.body;
+    if((e.metaKey||e.ctrlKey)&&!e.altKey&&/^[zy]$/i.test(e.key)&&!t.closest('input,textarea')){
+      e.preventDefault();
+      if(e.key.toLowerCase()==='y'||e.shiftKey)redo();else undo();
+      return;
+    }
     if(t.closest('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return;
     // Space and Enter on a focused button activate that button
     if((e.key===' '||e.key==='Enter')&&t.closest('button')) return;
@@ -1346,9 +1482,12 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     try{applyState(new URLSearchParams(location.hash.slice(1)));}
     catch(err){console.warn('Chladni Simulator: could not read the link',err);}
   }
+  if(MODLBL!=='⌘')document.querySelectorAll('kbd.mod').forEach(k=>{k.textContent='Ctrl';});
+  setView('vector');   // the full version opens on the view you export from
+  const DEFAULT_Q=stateQuery();
   readHash();
   syncHash();
-  setInterval(syncHash,500);
+  setInterval(syncHash,250);
   window.addEventListener('hashchange',readHash);
 
   loop();
