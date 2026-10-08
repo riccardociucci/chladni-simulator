@@ -96,8 +96,8 @@ Colours: the figure uses the Vibly palette — Black Dog `#1A1A1A` background, S
 | Space | Pause / resume (particles only)     |
 | R     | Reset particles + boost             |
 | S     | Export SVG                          |
-| F     | Fullscreen                          |
-| ← →   | Navigate presets                    |
+| F     | Fullscreen (the browser's full screen where allowed; Esc or the button on the plate exits) |
+| ← →   | Step through all presets            |
 | Esc   | Exit fullscreen                     |
 | ⌘Z / Ctrl+Z | Undo                          |
 | ⇧⌘Z / Ctrl+Y | Redo                         |
@@ -106,7 +106,7 @@ Colours: the figure uses the Vibly palette — Black Dog `#1A1A1A` background, S
 
 Every parameter that shapes the figure lives in the page address: the link reopens the same figure, and **Copy link** puts it on the clipboard. Exported files are named after their parameters (for example `chladni_m4n4_a1.00_b-1.00_9x16_density_band0.12.svg`), and each SVG carries the full parameter set and that link in its `<metadata>`. Particle positions are random, so a particle export matches the figure, not the exact grains.
 
-**Undo** and **Redo** step through settled states (a whole slider drag is one step), and **Restore defaults** is undoable too. On non-square plates in Density or Crop mode, a line under the node sliders shows the node counts actually drawn, and the preset thumbnails take the plate's proportions.
+**Undo** and **Redo** step through settled states (a whole slider drag is one step, each click a step of its own) and say what they changed; **Restore defaults** is undoable too. While paused, a badge on the plate resumes the simulation and the plate keeps redrawing. The canvas renders at the screen's pixel density, so vector edges stay sharp on Retina displays. On non-square plates in Density or Crop mode, a line under the node sliders shows the node counts actually drawn, and the preset thumbnails take the plate's proportions.
 
 ### Presets
 

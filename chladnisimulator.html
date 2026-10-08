@@ -9,12 +9,14 @@
    Purple Haze 800 (#642BAC) is the brand violet and fills; on black it is too
    dark for text, so text, borders and focus use the 400-500 steps. */
 :root{
+  color-scheme:dark;
   --bg:#1A1A1A;
   --panel:#131313;
   --surface:#202020;
   --surface-hi:#292929;
   --line:#2A2A2A;
   --line-hi:#3A3A3A;
+  --edge:#646464;
   --text:#FAFAFA;
   --text-2:#D4D4D4;
   --label:#A3A3A3;
@@ -50,10 +52,11 @@ h1 span{color:var(--violet-400);}
 .row{display:flex;align-items:center;gap:6px;}
 .lbl{font-size:12px;color:var(--label);flex:1;}
 input[type=range]{width:100%;accent-color:var(--violet-500);margin-top:2px;}
-input[type=number]{width:56px;flex-shrink:0;background:var(--surface);border:1px solid var(--line-hi);border-radius:5px;color:var(--text);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;padding:2px 6px;text-align:right;-moz-appearance:textfield;caret-color:var(--violet-400);}
+input[type=number]{width:56px;flex-shrink:0;background:var(--surface);border:1px solid var(--edge);border-radius:5px;color:var(--text);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;padding:2px 6px;text-align:right;-moz-appearance:textfield;caret-color:var(--violet-400);}
+input[type=number].narrow{width:48px;}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
 input[type=number]:focus-visible{outline-offset:0;border-color:var(--violet-400);}
-button{font-size:12px;padding:6px 8px;border:1px solid var(--line-hi);border-radius:7px;background:var(--surface);color:var(--text-2);cursor:pointer;text-align:left;width:100%;}
+button{font-size:12px;padding:6px 8px;border:1px solid var(--edge);border-radius:7px;background:var(--surface);color:var(--text-2);cursor:pointer;text-align:left;width:100%;}
 button:hover{background:var(--surface-hi);color:var(--text);}
 button.on{border-color:var(--violet-500);color:var(--violet-200);background:var(--violet-on);}
 .ab-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
@@ -64,13 +67,13 @@ button.on{border-color:var(--violet-500);color:var(--violet-200);background:var(
 .eq{font-size:12px;color:var(--muted);line-height:1.5;font-style:italic;margin-bottom:8px;}
 .hint2{font-size:12px;color:var(--muted);line-height:1.45;margin-top:6px;}
 [hidden]{display:none!important;}
-button:disabled{opacity:.4;cursor:default;}
+button:disabled{opacity:.5;cursor:default;}
 button:disabled:hover{background:var(--surface);color:var(--text-2);}
 a{color:var(--violet-400);text-underline-offset:2px;}
 a:hover{color:var(--violet-200);}
 /* On/off switches: the track says the state, the label says what it controls */
 button.sw{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-button.sw::after{content:"";flex-shrink:0;width:26px;height:14px;border-radius:7px;background:var(--line-hi) radial-gradient(circle at 7px 50%,var(--label) 4px,transparent 4.5px);transition:background .15s;}
+button.sw::after{content:"";flex-shrink:0;width:26px;height:14px;border-radius:7px;background:#6A6A6A radial-gradient(circle at 7px 50%,var(--text-2) 4px,transparent 4.5px);transition:background .15s;}
 button.sw.on::after{background:var(--violet) radial-gradient(circle at 19px 50%,var(--text) 4px,transparent 4.5px);}
 #btsym{width:34px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;color:var(--label);}
 #btsym.on{color:var(--violet-400);}
@@ -84,8 +87,10 @@ button.sw.on::after{background:var(--violet) radial-gradient(circle at 19px 50%,
 .pgroup-content{display:none;}
 .pgroup-content.open{display:block;}
 .presets{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 6px;}
-.presets button{width:auto;padding:4px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;line-height:1;font-variant-numeric:tabular-nums;}
+.presets button{width:auto;padding:3px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;line-height:1;font-variant-numeric:tabular-nums;}
 .presets button.anti{color:var(--violet-400);}
+/* The current preset, changed by the wave sources */
+.presets button.near{border-style:dashed;border-color:var(--violet-500);}
 .thumb{width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:0;}
 .thumb svg{border-radius:3px;}
 /* A closed group that holds the current preset carries a violet dot */
@@ -103,24 +108,32 @@ svg.ic{width:14px;height:14px;flex-shrink:0;stroke:currentColor;fill:none;stroke
 /* Shown on the plate while the simulation is paused; a click resumes it */
 .paused-badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;gap:6px;padding:6px 12px;border:none;border-radius:999px;background:var(--violet-on);color:var(--violet-200);font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.5);}
 .paused-badge:hover{background:var(--violet);color:var(--text);}
-#status{font-size:12px;color:var(--violet-200);min-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s;}
+.exit-badge{left:auto;right:16px;transform:none;opacity:.7;}
+.exit-badge:hover,.exit-badge:focus-visible{opacity:1;}
+#status{font-size:12px;line-height:1.35;color:var(--violet-200);min-height:32px;overflow-wrap:anywhere;opacity:0;transition:opacity .2s;}
 #status.show{opacity:1;}
+/* In fullscreen the status line moves onto the plate */
+#canvaswrap #status{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);min-height:0;max-width:80%;padding:6px 12px;border-radius:999px;background:var(--violet-on);box-shadow:0 2px 8px rgba(0,0,0,.5);}
 .kbhint{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);}
 .kbhint span{white-space:nowrap;}
-kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:var(--surface);border:1px solid var(--line-hi);border-radius:4px;padding:0 4px;}
+kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:var(--surface);border:1px solid var(--edge);border-radius:4px;padding:0 4px;}
 #app.fullscreen #sidebar,#app.fullscreen #rh{display:none;}
 #app.fullscreen #canvaswrap{padding:0;}
 #app.fullscreen canvas{border-radius:0;}
 /* Phones: the plate on top at full width, the controls below */
 @media (max-width:767px){
   #app{flex-direction:column;}
-  #canvaswrap{order:-1;flex:0 0 auto;height:56vh;height:56dvh;}
+  #canvaswrap{order:-1;flex:0 0 auto;height:56vh;height:min(var(--wraph,56dvh),calc(100vw * var(--pr,1) + 16px));}
+  #sb-scroll,#sb-actions{padding-left:16px;padding-right:16px;}
+  input[type=range]{height:32px;margin:0;}
   #sidebar{width:auto!important;min-width:0;max-width:none;flex:1;min-height:0;border-top:1px solid var(--line);}
   #rh{display:none;}
   button{min-height:40px;}
   .presets button{min-height:0;}
   .pgroup-header{min-height:40px;}
   input[type=number]{font-size:16px;min-height:32px;width:68px;}
+  input[type=number].narrow{width:72px;}
+  .kbhint{display:none;}
 }
 </style>
 </head>
@@ -141,10 +154,10 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
         </div>
         <div class="ctrl" id="customfmt" hidden inert style="margin-top:6px;">
           <div class="ab-row">
-            <div class="row"><label class="lbl" for="ncw">Width</label><input type="number" id="ncw" value="1080" min="100" max="4000" step="1"></div>
-            <div class="row"><label class="lbl" for="nch">Height</label><input type="number" id="nch" value="1080" min="100" max="4000" step="1"></div>
+            <div class="row"><label class="lbl" for="ncw">Width</label><input type="number" id="ncw" aria-describedby="customhint" value="1080" min="100" max="4000" step="1"></div>
+            <div class="row"><label class="lbl" for="nch">Height</label><input type="number" id="nch" aria-describedby="customhint" value="1080" min="100" max="4000" step="1"></div>
           </div>
-          <p class="hint2">Pixels: the real canvas resolution.</p>
+          <p class="hint2" id="customhint">Pixels: the real canvas resolution, from 100 to 4000.</p>
         </div>
         <h3 class="sublbl" id="t-adapt">Adapt</h3>
         <div class="ab-row3" role="group" aria-labelledby="t-adapt">
@@ -174,8 +187,8 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
             <h3 class="sublbl" id="t-fill" style="margin-top:0;">Fill</h3>
             <div class="ab-row4" role="group" aria-labelledby="t-fill">
               <button id="bfn" data-toggle>None</button>
-              <button id="bfb" class="on" data-toggle>Band</button>
-              <button id="bfr" data-toggle>Regions</button>
+              <button id="bfb" class="on" data-toggle title="A band around the nodal lines, like the gathered sand">Band</button>
+              <button id="bfr" data-toggle title="The positive areas as a single shape">Regions</button>
               <button id="bfc" data-toggle title="Positive and negative cells as separate closed shapes, each colourable on its own">Cells</button>
             </div>
           </div>
@@ -215,11 +228,11 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
           <p class="hint2" id="effnodes" hidden style="margin-top:0;"></p>
           <div class="ab-row" style="gap:8px;">
             <div class="ctrl">
-              <div class="row"><label class="lbl" for="na1">Base</label><input type="number" id="na1" value="1.00" min="-2" max="2" step="0.05" style="width:48px"></div>
+              <div class="row"><label class="lbl" for="na1">Base</label><input type="number" id="na1" value="1.00" min="-2" max="2" step="0.05" class="narrow"></div>
               <input type="range" id="sa1" min="-2" max="2" value="1" step="0.05">
             </div>
             <div class="ctrl">
-              <div class="row"><label class="lbl" for="nb1">Mirror</label><input type="number" id="nb1" value="1.00" min="-2" max="2" step="0.05" style="width:48px"></div>
+              <div class="row"><label class="lbl" for="nb1">Mirror</label><input type="number" id="nb1" value="1.00" min="-2" max="2" step="0.05" class="narrow"></div>
               <input type="range" id="sb1" min="-2" max="2" value="1" step="0.05">
             </div>
           </div>
@@ -241,14 +254,14 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
               </svg>
             </button>
           </div>
-          <p class="hint2" style="margin-top:0;">Four circular wave sources you drag on the plate. Particles gather along their interference nodes.</p>
+          <p class="hint2" style="margin-top:0;">Four circular wave sources you drag on the plate. The figure follows their interference nodes.</p>
           <div id="m2-params" class="stack" hidden inert>
             <div class="ctrl">
               <div class="row"><label class="lbl" for="nk2">Rings k</label><input type="number" id="nk2" value="6" min="1" max="30" step="0.5"></div>
               <input type="range" id="sk2" min="1" max="30" value="6" step="0.5">
             </div>
             <div class="ctrl">
-              <div class="row"><label class="lbl" for="nmix">Blend 1↔2</label><input type="number" id="nmix" value="50" min="0" max="100" step="1" style="width:48px"></div>
+              <div class="row"><label class="lbl" for="nmix">Blend 1↔2</label><input type="number" id="nmix" value="50" min="0" max="100" step="1" class="narrow"></div>
               <input type="range" id="rmix" min="0" max="100" value="50" step="1">
             </div>
           </div>
@@ -286,14 +299,15 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
 
       <p class="kbhint">
         <span><kbd>V</kbd> view</span>
-        <span><kbd>Space</kbd> pause</span>
-        <span><kbd>R</kbd> reset</span>
+        <span class="kb-p"><kbd>Space</kbd> pause</span>
+        <span class="kb-p"><kbd>R</kbd> reset</span>
         <span><kbd>S</kbd> export</span>
         <span><kbd>←</kbd> <kbd>→</kbd> presets</span>
         <span><kbd>F</kbd> fullscreen</span>
         <span><kbd class="mod">⌘</kbd> <kbd>Z</kbd> undo</span>
         <span><kbd>⇧</kbd> <kbd class="mod">⌘</kbd> <kbd>Z</kbd> redo</span>
       </p>
+      <p class="hint2" style="margin-top:0;">How it works: the <a href="https://github.com/riccardociucci/chladni-simulator#readme" target="_blank" rel="noopener">guide on GitHub</a>.</p>
     </div>
 
     <div id="sb-actions">
@@ -307,9 +321,10 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
       <p id="status" role="status" aria-live="polite"></p>
     </div>
   </aside>
-  <div id="rh" role="separator" aria-orientation="vertical" aria-label="Resize the controls panel"></div>
+  <div id="rh" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the controls panel" aria-valuemin="180" aria-valuemax="480" aria-valuenow="248"></div>
   <main id="canvaswrap">
     <button id="bpaused" class="paused-badge" hidden><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2l7.5 4.8L5 12.8z"/></svg>Paused · Resume</button>
+    <button id="bexitfs" class="paused-badge exit-badge" hidden>Exit fullscreen · Esc</button>
     <canvas id="chl" role="img" aria-label="Chladni figure"></canvas>
   </main>
 </div>
@@ -355,6 +370,15 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   let W=0,H=0,PS=100;
   let FORMAT={mode:'ratio',rw:1,rh:1,cw:1080,ch:1080};
 
+  // On high-density screens the canvas gets more backing pixels than its
+  // W×H drawing space, so edges stay sharp; drawing code keeps using W×H.
+  function applyBacking(dispW){
+    const dpr=window.devicePixelRatio||1;
+    const k=Math.max(1,Math.min(dpr,dispW*dpr/W));
+    const bw=Math.round(W*k),bh=Math.round(H*k);
+    if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;markVectorDirty();}
+    cx.setTransform(bw/W,0,0,bh/H,0,0);
+  }
   function resize(){
     const availW=Math.max(40,wrap.clientWidth-16),availH=Math.max(40,wrap.clientHeight-16);
     let w,h;
@@ -370,10 +394,19 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     }
     const nW=Math.max(40,Math.floor(w)),nH=Math.max(40,Math.floor(h));
     const disp=Math.min(availW/nW,availH/nH);
-    cv.style.width=Math.floor(nW*disp)+'px';cv.style.height=Math.floor(nH*disp)+'px';
-    if(nW===W&&nH===H)return;
+    const dispW=Math.floor(nW*disp);
+    cv.style.width=dispW+'px';cv.style.height=Math.floor(nH*disp)+'px';
+    // Phones size the plate area from the format's proportions
+    const pr=(FORMAT.mode==='custom'?FORMAT.ch/FORMAT.cw:FORMAT.rh/FORMAT.rw).toFixed(4);
+    if(document.documentElement.style.getPropertyValue('--pr')!==pr){
+      document.documentElement.style.setProperty('--pr',pr);
+      document.documentElement.style.setProperty('--wraph',+pr>1.2?'42dvh':'56dvh');
+      requestAnimationFrame(resize);
+    }
+    if(nW===W&&nH===H){applyBacking(dispW);return;}
     const sx=W?nW/W:1,sy=H?nH/H:1;
-    W=nW;H=nH;PS=Math.min(W,H);cv.width=W;cv.height=H;
+    W=nW;H=nH;PS=Math.min(W,H);
+    applyBacking(dispW);
     // Particles and sources are rescaled with the plate instead of starting
     // over: resizing the window does not wipe out a pattern already formed.
     if(ppx&&ppx.length===NP){for(let i=0;i<NP;i++){ppx[i]*=sx;ppy[i]*=sy;}}
@@ -532,7 +565,8 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   }
   function hitH(mx,my){
     if(!handlesOn)return -1;
-    const srcs=getSources(),r2=Math.pow(Math.max(14,PS*0.03),2);
+    // Hit radius in screen pixels, larger on touch screens
+    const srcs=getSources(),cssK=W/(cv.clientWidth||W),r2=Math.pow(Math.max(PS*0.03,(matchMedia('(pointer:coarse)').matches?24:12)*cssK),2);
     for(let i=0;i<4;i++){const[sx,sy]=srcs[i],dx=mx-sx,dy=my-sy;if(dx*dx+dy*dy<r2)return i;}
     return -1;
   }
@@ -794,9 +828,12 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     const srcs=getSources(),hr=Math.max(8,PS*0.016);
     for(let si=0;si<4;si++){
       const[sx,sy]=srcs[si],act=(si===drag||si===hov);
-      cx.strokeStyle=`rgba(203,186,248,${act?.95:.6})`;cx.lineWidth=1.4;
-      cx.beginPath();cx.arc(sx,sy,act?hr*1.3:hr,0,6.2832);cx.stroke();
-      cx.fillStyle=`rgba(203,186,248,${act?1:.75})`;cx.beginPath();cx.arc(sx,sy,2.5,0,6.2832);cx.fill();
+      // A dark halo under a violet ring: visible on the white fill and on black
+      const r=act?hr*1.3:hr,ink=act?'#E1D9FB':'#B192F3';
+      cx.lineWidth=3.5;cx.strokeStyle='rgba(26,26,26,.85)';cx.beginPath();cx.arc(sx,sy,r,0,6.2832);cx.stroke();
+      cx.lineWidth=1.6;cx.strokeStyle=ink;cx.beginPath();cx.arc(sx,sy,r,0,6.2832);cx.stroke();
+      cx.fillStyle=ink;cx.beginPath();cx.arc(sx,sy,3,0,6.2832);cx.fill();
+      cx.lineWidth=1;cx.strokeStyle='rgba(26,26,26,.85)';cx.stroke();
     }
   }
 
@@ -875,9 +912,9 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     }
     fieldAlpha=1.0;markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
   }
-  cv.addEventListener('mousemove',e=>{const[x,y]=getXY(e);hov=hitH(x,y);cv.style.cursor=hov>=0?'grab':'default';if(drag>=0)doDrag(drag,x,y);});
+  cv.addEventListener('mousemove',e=>{const[x,y]=getXY(e);hov=hitH(x,y);cv.style.cursor=hov>=0?'grab':'';if(drag>=0)doDrag(drag,x,y);});
   cv.addEventListener('mousedown',e=>{const[x,y]=getXY(e);const h=hitH(x,y);if(h>=0){drag=h;cv.style.cursor='grabbing';}});
-  cv.addEventListener('mouseup',()=>{if(drag>=0)markVectorDirty();drag=-1;cv.style.cursor=hov>=0?'grab':'default';});
+  cv.addEventListener('mouseup',()=>{if(drag>=0)markVectorDirty();drag=-1;cv.style.cursor=hov>=0?'grab':'';});
   cv.addEventListener('mouseleave',()=>{if(drag>=0)markVectorDirty();drag=-1;hov=-1;});
   cv.addEventListener('touchstart',e=>{const[x,y]=getTXY(e);const h=hitH(x,y);if(h>=0)drag=h;},{passive:true});
   cv.addEventListener('touchmove',e=>{e.preventDefault();const[x,y]=getTXY(e);if(drag>=0)doDrag(drag,x,y);},{passive:false});
@@ -886,7 +923,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   // ── Controls ─────────────────────────────────────────────
   function sync(sid,nid,dec,cb){
     const sl=document.getElementById(sid),nb=document.getElementById(nid);
-    function apply(v){const c=Math.max(+sl.min,Math.min(+sl.max,isNaN(v)?+sl.value:v));sl.value=c;nb.value=+c.toFixed(dec);cb(c);}
+    function apply(v){const c=Math.max(+sl.min,Math.min(+sl.max,isNaN(v)?+sl.value:v));sl.value=c;nb.value=c.toFixed(dec);cb(c);}
     sl.addEventListener('input',()=>apply(+sl.value));
     nb.addEventListener('change',()=>apply(+nb.value));
     nb.addEventListener('keydown',e=>{if(e.key==='Enter')apply(+nb.value);});
@@ -905,7 +942,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   set.stroke=sync('ssw','nsw',1,v=>{STROKEW=v;});
   set.mix=(()=>{
     const sl=document.getElementById('rmix'),nb=document.getElementById('nmix');
-    function apply(pct){const c=Math.max(0,Math.min(100,isNaN(pct)?50:pct));MIX=c/100;sl.value=c;nb.value=c;kickVelocities();triggerBoost();markVectorDirty();}
+    function apply(pct){const c=Math.max(0,Math.min(100,isNaN(pct)?50:pct));MIX=c/100;upB();sl.value=c;nb.value=c;kickVelocities();triggerBoost();markVectorDirty();}
     sl.addEventListener('input',()=>apply(+sl.value));
     nb.addEventListener('change',()=>apply(+nb.value));
     nb.addEventListener('keydown',e=>{if(e.key==='Enter')apply(+nb.value);});
@@ -927,8 +964,14 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     resize();markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
   }
   function setCustom(){
-    const w=Math.max(100,Math.min(4000,Math.round(+ncw.value)||1080));
-    const h=Math.max(100,Math.min(4000,Math.round(+nch.value)||1080));
+    const rawW=Math.round(+ncw.value),rawH=Math.round(+nch.value);
+    const w=Math.max(100,Math.min(4000,rawW||1080));
+    const h=Math.max(100,Math.min(4000,rawH||1080));
+    const clamped=(rawW&&rawW!==w)||(rawH&&rawH!==h);
+    if(clamped){
+      document.getElementById('customhint').textContent='Clamped: width and height go from 100 to 4000 px.';
+      say('Width and height go from 100 to 4000 px');
+    }
     ncw.value=w;nch.value=h;
     FORMAT={mode:'custom',rw:FORMAT.rw,rh:FORMAT.rh,cw:w,ch:h};
     setFormatBtns('bfcu');
@@ -937,10 +980,19 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   bf11.addEventListener('click',()=>setRatio('bf11',1,1));
   bf45.addEventListener('click',()=>setRatio('bf45',4,5));
   bf916.addEventListener('click',()=>setRatio('bf916',9,16));
-  bfcu.addEventListener('click',setCustom);
+  // Switching to Custom from a ratio keeps that ratio, on a 1080 px short side.
+  bfcu.addEventListener('click',()=>{
+    if(FORMAT.mode==='ratio'&&FORMAT.rw!==FORMAT.rh){
+      const s=1080/Math.min(FORMAT.rw,FORMAT.rh);ncw.value=Math.round(FORMAT.rw*s);nch.value=Math.round(FORMAT.rh*s);
+    }
+    setCustom();
+  });
   ncw.addEventListener('change',()=>{if(FORMAT.mode==='custom')setCustom();});
   nch.addEventListener('change',()=>{if(FORMAT.mode==='custom')setCustom();});
   ncw.addEventListener('keydown',e=>{if(e.key==='Enter')setCustom();});
+  [ncw,nch].forEach(i=>i.addEventListener('input',()=>{
+    document.getElementById('customhint').textContent='Pixels: the real canvas resolution, from 100 to 4000.';
+  }));
   nch.addEventListener('keydown',e=>{if(e.key==='Enter')setCustom();});
 
   const bastr=document.getElementById('bastr'),badns=document.getElementById('badns'),
@@ -966,7 +1018,9 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     setOff(vparams,!vec);
     document.getElementById('bsvg-txt').textContent=vec?'Export SVG · Vector':'Export SVG · Particles';
     setOff(document.getElementById('particles-section'),vec);
+    document.querySelectorAll('.kb-p').forEach(s=>{s.hidden=vec;});
     if(vec&&paused)setPaused(false);
+    if(!vec)triggerBoost();
     if(vec)markVectorDirty();
   }
   bvp.addEventListener('click',()=>setView('particles'));
@@ -1016,6 +1070,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   function setSources(on){
     handlesOn=on;
     btnh.classList.toggle('on',handlesOn);
+    upB();
     setOff(m2p,!handlesOn);
     setOff(btsym,!handlesOn);
     markFieldDirty();markVectorDirty();kickVelocities();triggerBoost();
@@ -1155,6 +1210,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     const q=stateQuery();
     if(q!==lastQuery){
       lastQuery=q;history.replaceState(null,'','#'+q);
+      cv.setAttribute('aria-label',`Chladni figure: nodes ${FX1} × ${FY1}, Base ${A1.toFixed(2)}, Mirror ${B1.toFixed(2)}, format ${fmtToken()}, ${ADAPT}, ${viewMode} view`);
       if(fullLink)fullLink.href='chladnisimulator.html#'+q;
     }
     if(!committed)committed=q;
@@ -1172,15 +1228,25 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     applyState(new URLSearchParams(q));
     committed=stateQuery();pendingQ='';syncHash();
   }
+  const PARAM_NAMES={m:'Nodes X',n:'Nodes Y',a:'Base',b:'Mirror',fmt:'format',adapt:'Adapt',view:'view',fill:'fill',
+    band:'band thickness',outline:'outline',stroke:'stroke width',smooth:'smooth curves',src:'wave sources',k:'rings',
+    mix:'blend',sym:'symmetry',hx:'sources',hy:'sources',pos:'sources',np:'grains',size:'size',vib:'vibration'};
+  function changes(a,b){
+    const A=new URLSearchParams(a),B=new URLSearchParams(b),out=[];
+    new Set([...A.keys(),...B.keys()]).forEach(k=>{
+      if(A.get(k)!==B.get(k)&&PARAM_NAMES[k]&&!out.includes(PARAM_NAMES[k]))out.push(PARAM_NAMES[k]);
+    });
+    return out.length?': '+out.slice(0,3).join(', ')+(out.length>3?'…':''):'';
+  }
   function undo(){
     const q=stateQuery();
     if(q!==committed)commit(q);
     if(!undoStack.length){say('Nothing to undo');return;}
-    redoStack.push(committed);goTo(undoStack.pop());say('Undone');
+    const from=committed;redoStack.push(committed);goTo(undoStack.pop());say('Undone'+changes(from,committed));
   }
   function redo(){
     if(stateQuery()!==committed||!redoStack.length){say('Nothing to redo');return;}
-    undoStack.push(committed);goTo(redoStack.pop());say('Redone');
+    const from=committed;undoStack.push(committed);goTo(redoStack.pop());say('Redone'+changes(from,committed));
   }
   function restoreDefaults(){
     const q=stateQuery();
@@ -1190,6 +1256,13 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     goTo(DEFAULT_Q);
     say(`Defaults restored. ${MODLBL}Z brings your figure back`);
   }
+  // A click on a button is one step of its own, without waiting for the
+  // 600 ms that group slider drags
+  document.getElementById('sidebar').addEventListener('click',e=>{
+    const b=e.target instanceof Element&&e.target.closest('button');
+    if(!b||b.closest('#bundo,#bredo,#bdef'))return;
+    setTimeout(()=>{const q=stateQuery();if(committed&&q!==committed)commit(q);},0);
+  });
   bundo.addEventListener('click',undo);
   bredo.addEventListener('click',redo);
   document.getElementById('bdef').addEventListener('click',restoreDefaults);
@@ -1219,7 +1292,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   let statusT=0;
   function say(msg){
     statusEl.textContent=msg;statusEl.title=msg;statusEl.classList.add('show');
-    clearTimeout(statusT);statusT=setTimeout(()=>statusEl.classList.remove('show'),4000);
+    clearTimeout(statusT);statusT=setTimeout(()=>statusEl.classList.remove('show'),6000);
   }
   bsvg.addEventListener('click',()=>{
     const svg=viewMode==='vector'?exportVectorSVG():exportParticlesSVG();
@@ -1250,10 +1323,13 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   function upB(){
     document.querySelectorAll('.preset-btn').forEach(btn=>{
       const m=+btn.dataset.m,n=+btn.dataset.n,a=+btn.dataset.a,b=+btn.dataset.b;
-      btn.classList.toggle('on',m===FX1&&n===FY1&&Math.abs(a-A1)<.04&&Math.abs(b-B1)<.04);
+      const match=m===FX1&&n===FY1&&Math.abs(a-A1)<.04&&Math.abs(b-B1)<.04,mod=handlesOn&&MIX>0;
+      btn.classList.toggle('on',match&&!mod);
+      btn.classList.toggle('near',match&&mod);
+      btn.title=match&&mod?'Current preset, changed by the wave sources':'';
     });
     document.querySelectorAll('.pgroup').forEach(g=>{
-      const has=!!g.querySelector('.preset-btn.on'),hdr=g.querySelector('.pgroup-header');
+      const has=!!g.querySelector('.preset-btn.on,.preset-btn.near'),hdr=g.querySelector('.pgroup-header');
       hdr.classList.toggle('has-on',has);hdr.title=has?'Holds the current preset':'';
     });
   }
@@ -1321,9 +1397,16 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   const effEl=document.getElementById('effnodes');
   let effTxt=null;
   const densityHint=document.getElementById('densityhint');
+  const ADAPT_NOTE=densityHint.textContent;
+  let adaptSquare=null;
   function updateEffective(){
+    // On a square plate Adapt changes nothing: its buttons are disabled
     const square=!(W&&H&&W!==H);
-    if(densityHint.hidden!==square)densityHint.hidden=square;
+    if(adaptSquare!==square){
+      adaptSquare=square;
+      [bastr,badns,bacrp].forEach(b=>{b.disabled=square;});
+      densityHint.textContent=square?'Adapt applies to non-square formats only.':ADAPT_NOTE;
+    }
     let s='';
     if(W&&H&&W!==H&&ADAPT==='density'){const g=geom();s=`Nodes on this plate, X × Y: Base ${g.ax} × ${g.ay}, Mirror ${g.bx} × ${g.by}`;}
     else if(W&&H&&W!==H&&ADAPT==='crop')s=`Cropped from the square ${FX1} × ${FY1} pattern`;
@@ -1391,8 +1474,20 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   const sb=document.getElementById('sidebar');
   let rsz=false,rsX=0,rsW=0;
   rh.addEventListener('mousedown',e=>{rsz=true;rsX=e.clientX;rsW=sb.offsetWidth;rh.classList.add('rh-drag');document.body.style.cursor='col-resize';document.body.style.userSelect='none';});
-  document.addEventListener('mousemove',e=>{if(!rsz)return;const w=Math.max(140,Math.min(480,rsW+(e.clientX-rsX)));sb.style.width=w+'px';resize();});
-  document.addEventListener('mouseup',()=>{if(rsz){rsz=false;rh.classList.remove('rh-drag');document.body.style.cursor='';document.body.style.userSelect='';}});
+  document.addEventListener('mousemove',e=>{if(!rsz)return;const w=Math.max(180,Math.min(480,rsW+(e.clientX-rsX)));sb.style.width=w+'px';rh.setAttribute('aria-valuenow',w);resize();});
+  rh.addEventListener('keydown',e=>{
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    e.preventDefault();e.stopPropagation();
+    const w=Math.max(180,Math.min(480,sb.offsetWidth+(e.key==='ArrowRight'?16:-16)));
+    sb.style.width=w+'px';rh.setAttribute('aria-valuenow',w);resize();saveSidebar();
+  });
+  // The panel width is a per-viewer convenience, kept in this browser only.
+  function saveSidebar(){try{localStorage.setItem('chladni-sidebar',sb.offsetWidth);}catch(e){}}
+  try{
+    const w=+localStorage.getItem('chladni-sidebar');
+    if(w>=180&&w<=480){sb.style.width=w+'px';rh.setAttribute('aria-valuenow',w);resize();}
+  }catch(e){}
+  document.addEventListener('mouseup',()=>{if(rsz){rsz=false;saveSidebar();rh.classList.remove('rh-drag');document.body.style.cursor='';document.body.style.userSelect='';}});
   rh.addEventListener('touchstart',e=>{rsz=true;rsX=e.touches[0].clientX;rsW=sb.offsetWidth;},{passive:true});
   document.addEventListener('touchmove',e=>{if(!rsz)return;const w=Math.max(140,Math.min(480,rsW+(e.touches[0].clientX-rsX)));sb.style.width=w+'px';resize();},{passive:true});
   document.addEventListener('touchend',()=>{rsz=false;});
@@ -1401,28 +1496,28 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
   const app=document.getElementById('app');
   const bfs=document.getElementById('bfs');
   let fsOn=false;
+  const bexit=document.getElementById('bexitfs');
+  bexit.addEventListener('click',()=>setFullscreen(false));
   function setFullscreen(on){
     fsOn=on;
     app.classList.toggle('fullscreen',on);
     bfs.classList.toggle('on',on);
     document.getElementById('bfs-txt').textContent=on?'Exit fullscreen':'Fullscreen';
+    bexit.hidden=!on;
+    (on?wrap:document.getElementById('sb-actions')).appendChild(statusEl);
+    if(on&&document.fullscreenEnabled&&!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});
+    if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
     document.getElementById('bfs-ic').innerHTML=on?'<path d="M6 2.5V6H2.5M13.5 6H10V2.5M10 13.5V10h3.5M2.5 10H6v3.5"/>':'<path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/>';
     resize();
   }
   bfs.addEventListener('click',()=>setFullscreen(!fsOn));
+  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsOn)setFullscreen(false);});
 
   // ── Keyboard shortcuts ───────────────────────────────────
-  function flatPresets(){
-    const btns=[];
-    document.querySelectorAll('.pgroup').forEach(g=>{
-      const isOpen=g.querySelector('.pgroup-content').classList.contains('open');
-      if(isOpen) g.querySelectorAll('.preset-btn').forEach(b=>btns.push(b));
-    });
-    if(btns.length===0) document.querySelectorAll('.preset-btn').forEach(b=>btns.push(b));
-    return btns;
-  }
+  // The arrow keys walk through all 43 presets and open the group they reach.
+  function flatPresets(){return[...document.querySelectorAll('.preset-btn')];}
   function currentPresetIdx(btns){
-    return btns.findIndex(b=>b.classList.contains('on'));
+    return btns.findIndex(b=>b.classList.contains('on')||b.classList.contains('near'));
   }
   function navigatePreset(dir){
     const btns=flatPresets();
@@ -1430,6 +1525,8 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     let idx=currentPresetIdx(btns);
     idx=((idx<0?0:idx)+dir+btns.length)%btns.length;
     btns[idx].click();
+    const hdr=btns[idx].closest('.pgroup').querySelector('.pgroup-header');
+    if(hdr.getAttribute('aria-expanded')!=='true')hdr.click();
     btns[idx].scrollIntoView({block:'nearest',behavior:'smooth'});
   }
 
@@ -1493,6 +1590,7 @@ kbd{font:inherit;font-size:11px;font-weight:600;color:var(--text-2);background:v
     const l=c.querySelector('label.lbl'),r=c.querySelector('input[type=range]');
     if(l&&r)r.setAttribute('aria-label',l.textContent);
   });
+  ['rmix','nmix'].forEach(id=>document.getElementById(id).setAttribute('aria-label','Blend between Mode 1 and Mode 2'));
 
   // ── Start ────────────────────────────────────────────────
   function readHash(){
